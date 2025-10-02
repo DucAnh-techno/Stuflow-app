@@ -1,0 +1,9 @@
+{
+  "build": {
+    "release": {
+      "ios": {
+        "simulator": false
+      }
+    }
+  }
+}

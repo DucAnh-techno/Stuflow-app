@@ -9,8 +9,11 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
-
+      "supportsTablet": true,
+      "bundleIdentifier": "y",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -58,7 +61,11 @@
         "appId": "1:884470691946:web:bd73fea8dcc9d8f1b0f213",
         "measurementId": "G-5YRLMTCMRW"
       },
-      "recaptchaSecret": "6Lc0tp8rAAAAACBI1CQiLODpBmaj7RMUsQLj8hmh"
+      "recaptchaSecret": "6Lc0tp8rAAAAACBI1CQiLODpBmaj7RMUsQLj8hmh",
+      "router": {},
+      "eas": {
+        "projectId": "22d20964-d18d-4294-a5d3-fcf7590d2b36"
+      }
     }
   }
 }

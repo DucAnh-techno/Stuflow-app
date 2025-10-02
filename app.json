@@ -4,7 +4,7 @@
     "slug": "my-app",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
+    "icon": "",
     "scheme": "myapp",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
@@ -14,16 +14,16 @@
     "android": {
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./assets/images/android-icon-foreground.png",
-        "backgroundImage": "./assets/images/android-icon-background.png",
-        "monochromeImage": "./assets/images/android-icon-monochrome.png"
+        "foregroundImage": "",
+        "backgroundImage": "",
+        "monochromeImage": ""
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false
     },
     "web": {
       "output": "static",
-      "favicon": "./assets/images/favicon.png"
+      "favicon": ""
     },
     "plugins": [
       "expo-router",
@@ -38,11 +38,26 @@
             "backgroundColor": "#000000"
           }
         }
-      ]
+      ],
+      "expo-secure-store",
+      "expo-font",
+      "expo-web-browser"
     ],
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "firebase": {
+        "apiKey": "AIzaSyC2rSPGWwRDqCaLRB4R6W-H1DDUI1Xb0l0",
+        "authDomain": "stuflow-7050c.firebaseapp.com",
+        "projectId": "stuflow-7050c",
+        "storageBucket": "stuflow-7050c.firebasestorage.app",
+        "messagingSenderId": "884470691946",
+        "appId": "1:884470691946:web:bd73fea8dcc9d8f1b0f213",
+        "measurementId": "G-5YRLMTCMRW"
+      },
+      "recaptchaSecret": "6Lc0tp8rAAAAACBI1CQiLODpBmaj7RMUsQLj8hmh"
     }
   }
 }

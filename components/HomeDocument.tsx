@@ -1,32 +1,27 @@
 import { fileSubSave } from "@/types";
-import { BlurView } from "expo-blur";
 import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
-  ActivityIndicator,
   Dimensions,
-  Modal,
+  Linking,
   ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
-  View
+  View,
+  Image
 } from "react-native";
-import { WebView } from "react-native-webview";
 
 const { height, width } = Dimensions.get("window");
 
 export default function HomeDocument({userData}: {userData: any}) {
   const router = useRouter();
   const [files, setFiles] = useState<fileSubSave[] | []>([]);
-  const [uri, setUri] = useState<string | null>(null);
 
   useEffect(() => {
     if (!userData) {return}
     setFiles(userData.itemSaved);
   }, [userData])
-
-  const closeViewer = () => setUri(null);
 
   return (
     <View style={styles.container}>
@@ -48,15 +43,13 @@ export default function HomeDocument({userData}: {userData: any}) {
           contentContainerStyle={styles.scrollContainer}
         >
                 {files?.map((file, index) => (
-                  <View key={index} style={{minWidth: "95%",}}>
+                  <View key={index} style={{minWidth: "95%", paddingLeft: 5}}>
                     <View style={{flexDirection: "row"}}>
                       {file.files.map((item, i) => (
                       <View key={i} style={{ alignItems: "center" }}>
-                        <TouchableOpacity style={{zIndex: 102}} onPress={() => setUri(item.uri)}>
+                        <TouchableOpacity style={{zIndex: 102}} onPress={() => Linking.openURL(item.uri)}>
                           <View style={[styles.doc, ]}>
-                            <Text style={{ fontWeight: "800", color: item.color, width: 75, fontSize: 20, textAlign: "center", opacity: 0.5}}>
-                              {item.name}
-                            </Text>
+                            <Image source={{uri: item.uri  }} style={styles.avatar}></Image>
                           </View>
                         </TouchableOpacity>
                         
@@ -68,39 +61,6 @@ export default function HomeDocument({userData}: {userData: any}) {
                 </View>
                 ))}
         </ScrollView>
-
-      <Modal
-        visible={!!uri}
-        animationType="slide"
-        onRequestClose={closeViewer}
-        presentationStyle="fullScreen"
-      >
-        <View style={[styles.modalContainer]}>
-          {/* WebView: load uri */}
-          {uri ? (
-            <WebView
-              originWhitelist={["*"]}
-              source={{ uri }}
-              style={[styles.webview]}
-              startInLoadingState
-              renderLoading={() => (
-                <View style={[styles.loadingWrap]}>
-                  <ActivityIndicator size="large" />
-                </View>
-              )}
-              // Props hữu ích để load file cục bộ trên Android/iOS:
-              allowFileAccess={true}
-              allowUniversalAccessFromFileURLs={true}
-              mixedContentMode="always"
-            />
-          ) : null}
-            <TouchableOpacity onPress={closeViewer} style={styles.closeButton}>
-              <BlurView intensity={50} tint="light" style={styles.blur}>
-                <Text style={styles.closeText}>X</Text>
-              </BlurView>
-            </TouchableOpacity>
-        </View>
-      </Modal>
       </View>
     </View>
   );
@@ -109,7 +69,7 @@ export default function HomeDocument({userData}: {userData: any}) {
 const styles = StyleSheet.create({
   container: {
     width: "100%",
-    marginVertical: 10,
+    marginVertical: 5,
     paddingHorizontal: 16,
   },
   card: {
@@ -209,10 +169,16 @@ const styles = StyleSheet.create({
     width: 80,
     borderRadius: 8,
     backgroundColor: "rgb(240, 240, 240, 0.3)",
-    marginHorizontal: 10,
+    marginHorizontal: 5,
     borderColor: "#aaa",
     borderWidth: 1,
     alignItems: "center",
     justifyContent: "center",
+    overflow: "hidden"
+  },
+  avatar: { 
+    width: "100%", 
+    height: "100%", 
+    resizeMode: "cover" 
   },
 });

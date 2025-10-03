@@ -142,7 +142,7 @@ export default function TabScreen() {
   };
 
   return (
-    <View style={{ flex: 1 }}>
+    <View style={{ flex: 1, backgroundColor: "black" }}>
       <View style={styles.container}>
         <TouchableOpacity onPress={handlePickImage} style={{shadowColor: "#000", shadowRadius: 5, shadowOpacity: 0.4, shadowOffset: {height: 0, width: 0},}}>
           <View style={styles.avatarWrapper}>
@@ -190,12 +190,12 @@ export default function TabScreen() {
 const styles = StyleSheet.create({
   container: { 
     zIndex: 999,
-    height: 120, 
+    height: 100, 
     width: "100%", 
     backgroundColor: "white", 
     flexDirection: "row", 
     alignItems: "flex-end", 
-    paddingBottom: 8, 
+    paddingBottom: 5, 
     borderBottomLeftRadius: 30, 
     borderBottomRightRadius: 30, 
     shadowColor: "#000", 
@@ -203,7 +203,9 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2.5 }, 
     shadowRadius: 3, 
     elevation: 4,
-    transform: [{translateY: 21}],
+    transform: [{translateY: 32}],
+    borderTopRightRadius: 20, 
+    borderTopLeftRadius: 20, 
   },
   avatarWrapper: { 
     width: 70, 

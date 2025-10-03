@@ -30,12 +30,12 @@ export async function savePicture( result: ImagePicker.ImagePickerResult, subjec
     const idx = picturesData.findIndex((item) => item.subName === subject);
 
     if (idx !== -1) {
-        picturesData[idx].pictures.push({ uri: uri});
+        picturesData[idx].pictures.push( {uri});
     }else {
         const sub = {
             subName: subject, 
             files: [],
-            pictures: [{ uri: uri}]
+            pictures: [{uri}]
         };
         picturesData.push(sub);
     }

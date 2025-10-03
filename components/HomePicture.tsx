@@ -1,31 +1,32 @@
-import { fileSubSave } from "@/types";
-import { BlurView } from "expo-blur";
+import { fileSubSave, Pictures } from "@/types";
 import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
-    Dimensions,
-    Image,
-    Modal,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View
+  Dimensions,
+  Image,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View
 } from "react-native";
+import ImageViewing from "react-native-image-viewing";
 
 const { height, width } = Dimensions.get("window");
 
 export default function HomePicture({userData}: {userData: any}) {
   const router = useRouter();
   const [files, setFiles] = useState<fileSubSave[] | []>([]);
-  const [uri, setUri] = useState<string | null>(null);
+  const [uri, setUri] = useState<Pictures[]>([]);
+  const [startIndex, setStartIndex] = useState<number>(0);
+  const [showImage, setShowImage] = useState(false);
 
   useEffect(() => {
     if (!userData) {return}
     setFiles(userData.itemSaved);
   }, [userData])
 
-  const closeViewer = () => setUri(null);
+  const allFile: Pictures[] = files.flatMap(sub => sub.pictures.map(pic => ({uri:pic.uri})));
 
   return (
     <View style={styles.container}>
@@ -46,54 +47,30 @@ export default function HomePicture({userData}: {userData: any}) {
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.scrollContainer}
         >
-                {files?.map((file, index) => (
-                  <View key={index} style={{minWidth: "95%",}}>
-                    <View style={{flexDirection: "row"}}>
-                      {file.pictures.map((item, i) => (
-                      <View key={i} style={{ alignItems: "center" }}>
-                        <TouchableOpacity style={{zIndex: 102}} onPress={() => setUri(item.uri)}>
-                          <View style={[styles.doc]}>
-                            <Image source={{uri: item?.uri  }} style={styles.avatar} />
-                          </View>
-                        </TouchableOpacity>
-                        
-                        <Text style={{fontFamily: "MuseoModerno", width: 70, height: 25, textAlign: "center", overflow: "hidden"}}>{file.subName}</Text>
-                        
-                      </View>
-                      ))}
+          <View  style={{minWidth: "95%", paddingLeft: 5}}>
+            <View  style={{flexDirection: "row"}}>
+              {allFile.map((file, index) => (
+              <View key={index} style={{ alignItems: "center" }}>
+                <TouchableOpacity style={{zIndex: 102}} onPress={() => {setUri(allFile); setStartIndex(index); setShowImage(true);}}>
+                  <View style={[styles.doc]}>
+                    <Image source={{uri: file.uri  }} style={styles.avatar} />
                   </View>
-                </View>
-                ))}
+                </TouchableOpacity>
+              </View>
+              ))}
+            </View>
+          </View>
         </ScrollView>
 
-      <Modal
-        visible={!!uri}
-        animationType="slide"
-        onRequestClose={closeViewer}
-        presentationStyle="fullScreen"
-      >
-        <View style={[styles.modalContainer]}>
-          {/* WebView: load uri */}
-          {uri ? (
-            <View style={{flex: 1, justifyContent: "center", alignItems: "center"}}>
-                <Image
-                source={{ uri }}
-                    style={{
-                        width: "95%",       
-                        height: "80%",      
-                        resizeMode: "contain", 
-                        borderRadius: 10
-                    }}
-                />
-            </View>
-          ) : null}
-            <TouchableOpacity onPress={closeViewer} style={styles.closeButton}>
-              <BlurView intensity={50} tint="light" style={styles.blur}>
-                <Text style={styles.closeText}>X</Text>
-              </BlurView>
-            </TouchableOpacity>
-        </View>
-      </Modal>
+        <ImageViewing
+          images={uri}
+          imageIndex={startIndex}            // ảnh mở đầu
+          visible={showImage}                  // show/hide modal
+          onRequestClose={() => setShowImage(false)} // bắt đóng (Android back, tap close)
+          onImageIndexChange={(i) => console.log("swipe to", i)} // optional
+          swipeToCloseEnabled={true}         // swipe up/down để đóng
+          doubleTapToZoomEnabled={true}      // double tap zoom
+        />
       </View>
     </View>
   );
@@ -110,6 +87,7 @@ const styles = StyleSheet.create({
     backgroundColor: "white",
     borderRadius: 16,
     paddingVertical: 8,
+    paddingBottom: 15
   },
   header: {
     flexDirection: "row",
@@ -202,7 +180,7 @@ const styles = StyleSheet.create({
     width: 80,
     borderRadius: 8,
     backgroundColor: "rgb(240, 240, 240, 0.3)",
-    marginHorizontal: 10,
+    marginHorizontal: 5,
     borderColor: "#aaa",
     borderWidth: 1,
     alignItems: "center",

@@ -258,7 +258,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     paddingVertical: 18,
     paddingHorizontal: width * 0.05,
-    minHeight: height * 0.7,
+    minHeight: height * 0.73,
   },
   header: {
     flexDirection: "row",

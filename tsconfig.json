@@ -12,7 +12,8 @@
       "firebase/auth/react-native": [
         "./node_modules/firebase/auth/react-native"
       ]
-    }
+    },
+    "ignoreDeprecations": "6.0",
   },
   "include": [
     "**/*.ts",

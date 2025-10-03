@@ -4,27 +4,28 @@ import { removePicture } from "@/components/functions/removePicture";
 import { removeSubject } from "@/components/functions/removeSubject";
 import { savePicture } from "@/components/functions/savePicture";
 import { useAuth } from '@/src/context/AuthContext';
-import { fileSubSave } from "@/types";
+import { fileSubSave, Pictures } from "@/types";
 import { Picker } from "@react-native-picker/picker";
 import { BlurView } from "expo-blur";
 import * as ImagePicker from "expo-image-picker";
 import { doc, getDoc } from "firebase/firestore";
 import React, { useEffect, useRef, useState } from "react";
 import {
-    Alert,
-    Animated,
-    Dimensions,
-    Image,
-    Keyboard,
-    Modal,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    TouchableWithoutFeedback,
-    View
+  Alert,
+  Animated,
+  Dimensions,
+  Image,
+  Keyboard,
+  Modal,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  TouchableWithoutFeedback,
+  View
 } from "react-native";
+import ImageViewing from "react-native-image-viewing";
 import { db } from "src/firebase/firebase";
 
 const { height, width } = Dimensions.get("window");
@@ -33,7 +34,9 @@ export default function PicturePage() {
   const { user, reload } = useAuth();
   const [pictures, setPictures] = useState<fileSubSave[] | []>([]);
   const [ filePick, setFilePick ] = useState<ImagePicker.ImagePickerResult | null>(null);
-  const [uri, setUri] = useState<string | null>(null);
+  const [uri, setUri] = useState<Pictures[]>([]);
+  const [startIndex, setStartIndex] = useState<number>(0);
+  const [showImage, setShowImage] = useState(false);
   const [ showInput, setShowInput ] = useState(false);
 
   const [ subjectName, setSubjectName ] = useState("");
@@ -204,10 +207,8 @@ export default function PicturePage() {
     setShowInput(false);
     setSubjectName("");
     setInsertPic(false);
+    setError("");
   };
-
-  // helper: close modal
-  const closeViewer = () => setUri(null);
 
   async function removeF( uri: string, subject: string) {
     const res: any = await removePicture(uri, subject, user);
@@ -264,9 +265,9 @@ export default function PicturePage() {
                     <View style={{flexDirection: "row", flexWrap: "wrap",}}>
                       {picture.pictures.map((item, i) => (
                       <View key={i} style={{ alignItems: "center" }}>
-                        <TouchableOpacity style={{zIndex: 102}} onPress={() => setUri(item.uri)} onLongPress={() => {setSelected(index * 1000 + i); setIsLongPress(true)}}>
+                        <TouchableOpacity style={{zIndex: 102}} onPress={() => {setUri(picture.pictures); setShowImage(true); setStartIndex(i); }} onLongPress={() => {setSelected(index * 1000 + i); setIsLongPress(true)}}>
                           <View style={[styles.doc, selected === (index * 1000 + i) && styles.selectedFile]}>
-                            <Image source={{uri: item?.uri  }} style={styles.avatar} />
+                            <Image source={{uri: item.uri }} style={styles.avatar} />
                           </View>
                         </TouchableOpacity>
 
@@ -325,36 +326,19 @@ export default function PicturePage() {
         </TouchableWithoutFeedback>
       </ScrollView>
 
+        {/* Modal fullscreen để hiển thị WebView */}
+        <ImageViewing
+          images={uri}
+          imageIndex={startIndex}            // ảnh mở đầu
+          visible={showImage}                  // show/hide modal
+          onRequestClose={() => setShowImage(false)} // bắt đóng (Android back, tap close)
+          onImageIndexChange={(i) => console.log("swipe to", i)} // optional
+          swipeToCloseEnabled={true}         // swipe up/down để đóng
+          doubleTapToZoomEnabled={true}      // double tap zoom
+        />
 
-
-      {/* Modal fullscreen để hiển thị WebView */}
-      <Modal
-        visible={!!uri}
-        animationType="slide"
-        onRequestClose={closeViewer}
-        presentationStyle="fullScreen"
-      >
-        <View style={[styles.modalContainer]}>
-          {/* WebView: load uri */}
-          {uri ? (
-            <View style={{flex: 1, justifyContent: "center", alignItems: "center"}}>
-                <Image
-                source={{ uri }}
-                    style={{
-                        width: "95%",       
-                        height: "80%",      
-                        resizeMode: "contain", 
-                    }}
-                />
-            </View>
-          ) : null}
-            <TouchableOpacity onPress={closeViewer} style={styles.closeButton}>
-              <BlurView intensity={50} tint="light" style={styles.blur}>
-                <Text style={styles.closeText}>X</Text>
-              </BlurView>
-            </TouchableOpacity>
-        </View>
-      </Modal>
+      
+ 
 
           {/** Hiển thị input nhập ảnh */}
      <Modal transparent visible={showInput} animationType="fade">
@@ -454,7 +438,7 @@ const styles = StyleSheet.create({
     width: "100%",
     backgroundColor: "white",
     borderRadius: 16,
-    minHeight: height * 0.7
+    minHeight: height * 0.73
   },
   subText: {
     fontFamily: "MuseoModerno",

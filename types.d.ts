@@ -38,7 +38,7 @@ export interface Courses {
 export interface fileSubSave {
   subName: string,
   files: Files[],
-  pictures: Picture[],
+  pictures: Pictures[],
 }
   
 export interface Files {

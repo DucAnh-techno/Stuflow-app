@@ -11,11 +11,12 @@ import * as DocumentPicker from "expo-document-picker";
 import { doc, getDoc } from "firebase/firestore";
 import React, { useEffect, useRef, useState } from "react";
 import {
-  ActivityIndicator,
   Alert,
   Animated,
   Dimensions,
+  Image,
   Keyboard,
+  Linking,
   Modal,
   ScrollView,
   StyleSheet,
@@ -23,9 +24,8 @@ import {
   TextInput,
   TouchableOpacity,
   TouchableWithoutFeedback,
-  View,
+  View
 } from "react-native";
-import { WebView } from "react-native-webview";
 import { db } from "src/firebase/firebase";
 
 const { height, width } = Dimensions.get("window");
@@ -33,7 +33,6 @@ const { height, width } = Dimensions.get("window");
 export default function DocumentPage() {
   const { user, reload } = useAuth();
   const [files, setFiles] = useState<fileSubSave[] | []>([]);
-  const [uri, setUri] = useState<string | null>(null);
 
   const [ fileName, setFileName ] = useState("");
   const [ subjectName, setSubjectName ] = useState("");
@@ -144,9 +143,6 @@ export default function DocumentPage() {
     setSubjectName("");
   };
 
-  // helper: close modal
-  const closeViewer = () => setUri(null);
-
   async function removeF( uri: string, subject: string) {
     const res: any = await removeFile(uri, subject, user);
     setFiles(res);
@@ -202,11 +198,9 @@ export default function DocumentPage() {
                     <View style={{flexDirection: "row", flexWrap: "wrap",}}>
                       {file.files.map((item, i) => (
                       <View key={i} style={{ alignItems: "center" }}>
-                        <TouchableOpacity style={{zIndex: 102}} onPress={() => setUri(item.uri)} onLongPress={() => {setSelected(index * 1000 + i); setIsLongPress(true)}}>
+                        <TouchableOpacity style={{zIndex: 102}} onPress={() => Linking.openURL(item.uri)} onLongPress={() => {setSelected(index * 1000 + i); setIsLongPress(true)}}>
                           <View style={[styles.doc, selected === (index * 1000 + i) && styles.selectedFile]}>
-                            <Text style={{ fontWeight: "800", color: item.color, width: 75, fontSize: 20, textAlign: "center", opacity: 0.5}}>
-                              {item.name}
-                            </Text>
+                            <Image source={{uri: item.uri  }} style={styles.avatar}></Image>
                           </View>
                         </TouchableOpacity>
 
@@ -248,42 +242,6 @@ export default function DocumentPage() {
           </View>
         </TouchableWithoutFeedback>
       </ScrollView>
-
-
-
-      {/* Modal fullscreen để hiển thị WebView */}
-      <Modal
-        visible={!!uri}
-        animationType="slide"
-        onRequestClose={closeViewer}
-        presentationStyle="fullScreen"
-      >
-        <View style={[styles.modalContainer]}>
-          {/* WebView: load uri */}
-          {uri ? (
-            <WebView
-              originWhitelist={["*"]}
-              source={{ uri }}
-              style={[styles.webview]}
-              startInLoadingState
-              renderLoading={() => (
-                <View style={[styles.loadingWrap]}>
-                  <ActivityIndicator size="large" />
-                </View>
-              )}
-              // Props hữu ích để load file cục bộ trên Android/iOS:
-              allowFileAccess={true}
-              allowUniversalAccessFromFileURLs={true}
-              mixedContentMode="always"
-            />
-          ) : null}
-            <TouchableOpacity onPress={closeViewer} style={styles.closeButton}>
-              <BlurView intensity={50} tint="light" style={styles.blur}>
-                <Text style={styles.closeText}>X</Text>
-              </BlurView>
-            </TouchableOpacity>
-        </View>
-      </Modal>
 
       {/* Modal để hiển thị input */}
       <Modal transparent visible={showInput} animationType="fade">
@@ -391,7 +349,7 @@ const styles = StyleSheet.create({
     width: "100%",
     backgroundColor: "white",
     borderRadius: 16,
-    minHeight: height * 0.7
+    minHeight: height * 0.73
   },
   subText: {
     fontFamily: "MuseoModerno",
@@ -416,6 +374,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     alignItems: "center",
     justifyContent: "center",
+    overflow: "hidden"
   },
   insert: {
     height: 80,
@@ -581,7 +540,11 @@ const styles = StyleSheet.create({
   },
   index: {
     zIndex: 102,
-  }
-
+  },
+  avatar: { 
+    width: "100%", 
+    height: "100%", 
+    resizeMode: "cover" 
+  },
 
 });

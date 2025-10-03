@@ -2,20 +2,6 @@
 
 export async function updateData(username: string, password: string, token: string) {
 
-  const now = new Date();
-  const month = now.getMonth();
-  const day = now.getDate();
-
-    const dateThang: string[] = [-1, 0, 1, 2, 3].map(offset =>
-      getFirstDayOfMonth(new Date(now.getFullYear(), month + offset, 1))
-    );
-
-    const dateTuan: string[] = [-14, -7, 0, 7, 14, 21, 28, 35, 42].map(offset =>
-      formatDate(new Date(now.getFullYear(), month, day + offset))
-    );
-
-    console.log('day laf thoong tin ---------------', JSON.stringify({ username, password, token, date: dateThang }));
-    
     try {
         //Lay lich Courses
     const resCourse = await fetch('https://stuflow-notify.vercel.app/api/lib/lichCourse', {
@@ -33,7 +19,7 @@ export async function updateData(username: string, password: string, token: stri
     const resThang = await fetch('https://stuflow-notify.vercel.app/api/lib/lichHoc/thang', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, password, token, date: dateThang })
+      body: JSON.stringify({ username, password, token })
     });
     if (!resThang.ok) {
       const text = await resThang.text().catch(() => '');
@@ -44,7 +30,7 @@ export async function updateData(username: string, password: string, token: stri
     const resTuan = await fetch('https://stuflow-notify.vercel.app/api/lib/lichHoc/tuan', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, password, token, date: dateTuan })
+      body: JSON.stringify({ username, token })
     });
     if (!resTuan.ok) {
       const text = await resTuan.text().catch(() => '');
@@ -59,17 +45,4 @@ export async function updateData(username: string, password: string, token: stri
         console.error("API error:", err);
         return { error: err };
     }
-}
-
-function getFirstDayOfMonth(date: Date) {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0"); // thêm số 0 ở trước nếu <10
-  return `${year}-${month}-01`;
-}
-
-function formatDate(date: Date) {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
 }

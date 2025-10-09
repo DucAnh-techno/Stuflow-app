@@ -50,3 +50,10 @@ export interface Files {
 export interface Pictures {
   uri: string,
 }
+
+export interface Schedule {
+  color: string,
+  daystart: string,
+  name: string,
+  timestart: string,
+}

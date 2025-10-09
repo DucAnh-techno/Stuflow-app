@@ -2,7 +2,7 @@
 import { useAuth } from '@/src/context/AuthContext';
 import { doc, getDoc } from "firebase/firestore";
 import { useEffect, useState } from "react";
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, TouchableOpacity, View, RefreshControl } from 'react-native';
 import { db } from "src/firebase/firebase";
 
 import HomeCalendar from '@/components/HomeCalendar';
@@ -10,7 +10,8 @@ import HomeDocument from '@/components/HomeDocument';
 import HomePicture from '@/components/HomePicture';
 
 export default function HomeScreen() {
-  const { user, signOut, reload } = useAuth();
+  const [refreshing, setRefreshing] = useState(false);
+  const { user, reload, setReload, signOut} = useAuth();
   const [ userData, setUserData ] = useState<any | null>(null);
   
   useEffect(() => {
@@ -28,9 +29,28 @@ export default function HomeScreen() {
     collectUserData();
   }, [user, reload]);
 
+  const onRefresh = () => {
+    setRefreshing(true);
+
+    setReload(new Date());
+
+    setRefreshing(false)
+  };
+
 
   return (
-    <ScrollView showsVerticalScrollIndicator={false} style={{paddingTop: 16}}>
+    <ScrollView showsVerticalScrollIndicator={false} style={{paddingTop: 16}}
+      refreshControl={
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={onRefresh}
+          colors={["#2196F3"]}            // màu vòng xoay (Android)
+          tintColor="#2196F3"             // màu vòng xoay (iOS)
+          title="Đang tải..."             // iOS: chữ hiện khi kéo
+          progressBackgroundColor="#fff"  // nền vòng xoay (Android)
+        />
+      }
+    >
 
       <HomeCalendar userData={userData}></HomeCalendar>
       <HomeDocument userData={userData}></HomeDocument>

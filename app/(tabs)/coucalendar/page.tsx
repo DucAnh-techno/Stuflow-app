@@ -12,7 +12,8 @@ import {
   Text,
   TouchableOpacity,
   TouchableWithoutFeedback,
-  View
+  View,
+  RefreshControl
 } from "react-native";
 import { db } from "src/firebase/firebase";
 import SkeletonWeekCard from "../../../components/skeletons/wcalendarSkeleton";
@@ -27,7 +28,8 @@ const mm = String(new Date().getMonth() + 1).padStart(2, "0");
 
 
 export default function CoursesCalendar() {
-  const { user, reload } = useAuth();
+  const { user, reload, setReload } = useAuth();
+  const [refreshing, setRefreshing] = useState(false);
   const today = new Date();
     
   const [data, setData] = useState<any>();
@@ -109,8 +111,27 @@ useEffect(() => {
 
   const weeks = getWeeksDates();
 
+  const onRefresh = () => {
+    setRefreshing(true);
+
+    setReload(new Date());
+
+    setRefreshing(false)
+  };
+
   return (
-    <ScrollView>
+    <ScrollView
+      refreshControl={
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={onRefresh}
+          colors={["#2196F3"]}            // màu vòng xoay (Android)
+          tintColor="#2196F3"             // màu vòng xoay (iOS)
+          title="Đang tải..."             // iOS: chữ hiện khi kéo
+          progressBackgroundColor="#fff"  // nền vòng xoay (Android)
+        />
+      }
+    >
       <TouchableWithoutFeedback>
         <View style={styles.container}>
           <View style={styles.card}>
@@ -248,7 +269,7 @@ const styles = StyleSheet.create({
   container: {
     width: "100%",
     padding: width * 0.035,
-    marginTop: 26
+    marginTop: 31
   },
   card: {
     width: "100%",
@@ -361,7 +382,7 @@ const styles = StyleSheet.create({
   subcont: {
     flexDirection: "row",
     width: "100%",
-    minHeight: "70%",
+    minHeight: "71%",
     borderWidth: 1,
     borderColor: "gray",
     borderBottomLeftRadius: 10,

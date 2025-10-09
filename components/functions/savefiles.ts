@@ -1,8 +1,8 @@
 import { fileSubSave } from "@/types";
 import * as DocumentPicker from "expo-document-picker";
 import * as FileSystem from "expo-file-system/legacy";
-import { doc, getDoc, setDoc } from "firebase/firestore";
-import { db } from "src/firebase/firebase";
+    import { doc, getDoc, setDoc } from "firebase/firestore";
+    import { db } from "src/firebase/firebase";
 
 export async function saveFile( result: DocumentPicker.DocumentPickerResult, name: string, subject: string, user: string | null) {
     const randomColor = () => {

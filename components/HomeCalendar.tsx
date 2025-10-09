@@ -23,12 +23,42 @@ export default function HomeCalendar({userData}: {userData: any}) {
 
   const [showModal, setShowModal] = useState(false);
   const [timeModal, setTimeModal] = useState("");
-  const slideAnim = useRef(new Animated.Value(height)).current;
+
+  const scaleAnim = useRef(new Animated.Value(0)).current;
+  const translateX = useRef(new Animated.Value(0)).current;
+  const translateY = useRef(new Animated.Value(0)).current;
+
+
+  const scale = useRef(new Animated.Value(0.6)).current;
+  const opacity = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     if (!userData) {return}
     setData(userData);
   }, [userData])
+  
+  useEffect(() => {
+    opacity.stopAnimation();
+    scale.stopAnimation();
+
+    if (isOpen) {
+      opacity.setValue(0);
+      scale.setValue(0.6);
+
+      Animated.parallel([
+        Animated.timing(opacity, {
+          toValue: 1,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+        Animated.spring(scale, {
+          toValue: 1,
+          friction: 6,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    }
+  }, [isOpen, opacity, scale]);
 
   if (!data) {
     return (
@@ -40,20 +70,44 @@ export default function HomeCalendar({userData}: {userData: any}) {
   const lichTuan = data.lichTuan as LichTuanItem[];
   const lichThang = data.lichThang as DayItem[];
 
-  const toggle = () => setIsOpen(!isOpen);
+  const handleOpen = ( nativeEvent: { pageX: number; pageY: number }) => {
+    const { pageX, pageY } = nativeEvent;
+
+    // đặt vị trí ban đầu cho animation (tính trung tâm màn hình)
+    // translateX, translateY là Animated.Value từ trước
+    translateX.setValue(pageX - width / 2);
+    translateY.setValue(pageY - height / 2);
+    scaleAnim.setValue(0.1);
+
+    // bắt đầu animation phóng to và dịch chuyển vào giữa
+    Animated.parallel([
+      Animated.spring(scaleAnim, {
+        toValue: 1,
+        useNativeDriver: true,
+      }),
+      Animated.spring(translateX, {
+        toValue: 0,
+        useNativeDriver: true,
+      }),
+      Animated.spring(translateY, {
+        toValue: 0,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  };
+
+  const toggle = () => {
+    setIsOpen(!isOpen)
+  };
   const handleSelect = (m: number) => {
     setMonth(m);
     setIsOpen(false);
   };
 
   const closeModal = () => {
-    Animated.timing(slideAnim, {
-      toValue: height,
-      duration: 10,
-      useNativeDriver: true,
-    }).start(() => {
+    
       setShowModal(false);
-    });
+    
   };
 
   const prevMonth = () => {
@@ -95,7 +149,7 @@ export default function HomeCalendar({userData}: {userData: any}) {
                   <Text style={styles.arrow}>&lt;</Text>
                 </TouchableOpacity>
 
-                <TouchableOpacity onPress={toggle} style={styles.monthTextWrapper}>
+                <TouchableOpacity onPress={(e) => {toggle(); handleOpen(e.nativeEvent)}} style={styles.monthTextWrapper}>
                   <Text style={styles.monthText}>{month + 1}/{year}</Text>
                 </TouchableOpacity>
 
@@ -104,17 +158,20 @@ export default function HomeCalendar({userData}: {userData: any}) {
                 </TouchableOpacity>
 
                 {isOpen && (
-                  <View style={styles.dropdown}>
-                    {months.map((m, idx) => (
+                  <Animated.View style={[
+                      styles.dropdown,
+                      { transform: [{ scale: scaleAnim }, {translateX}, {translateY}] },
+                      ]}>
+                      {months.map((m, idx) => (
                       <TouchableOpacity
-                        key={idx}
-                        style={[styles.dropdownItem, idx === month && styles.selectedMonth]}
-                        onPress={() => handleSelect(idx)}
+                          key={idx}
+                          style={[styles.dropdownItem, idx === month && styles.selectedMonth]}
+                          onPress={() => handleSelect(idx)}
                       >
-                        <Text style={{fontFamily: "MuseoModerno", }}>{m}/{year}</Text>
+                          <Text style={{fontFamily: "MuseoModerno", }}>{m}/{year}</Text>
                       </TouchableOpacity>
-                    ))}
-                  </View>
+                      ))}
+                  </Animated.View>
                 )}
               </View>
 
@@ -140,19 +197,15 @@ export default function HomeCalendar({userData}: {userData: any}) {
             {weeks.map((week, wIndex) => (
               <View key={wIndex} style={styles.weekRow}>
                 {week.map((day, dIndex) => (
-                  <TouchableOpacity 
+                  <Pressable 
                     key={dIndex}
                     style={styles.touchToModal}
-                    onPress={async () => {
+                    onPress={async (e) => {
+                      setIsOpen(false);
                       if (day !== null) {
                         setShowModal(true);
                         setTimeModal(`${dIndex}-${day}-${month + 1}`);
-                        slideAnim.setValue(height);
-                        Animated.timing(slideAnim, {
-                          toValue: 0,
-                          duration: 300,
-                          useNativeDriver: true,
-                        }).start();
+                        handleOpen(e.nativeEvent);
                       }
                     }}
                     >
@@ -201,7 +254,7 @@ export default function HomeCalendar({userData}: {userData: any}) {
                       ))}
 
                     </View>
-                  </TouchableOpacity>
+                  </Pressable>
                 ))}
               </View>
             ))}
@@ -225,46 +278,47 @@ export default function HomeCalendar({userData}: {userData: any}) {
         </View>
       </TouchableWithoutFeedback>
 
-      <View style={styles.centeredView}>
-        <Modal 
-        visible={showModal}
-        transparent={true}
-        animationType="none"
-        >
-        <Pressable
-          style={styles.overlay}
+      <Modal visible={showModal} transparent animationType="none">
+
+        <Pressable 
+          style={{
+            flex: 1,
+            backgroundColor: "rgba(0,0,0,0.4)",
+            justifyContent: "center",
+            alignItems: "center",
+          }}
           onPress={closeModal}
         >
-        </Pressable>
+      
 
-        <Animated.View
-          style={[
-            styles.modalContent,
-            { transform: [{ translateY: slideAnim }] },
-          ]}
-        ></Animated.View>
-          <View style={styles.modalCont}>
-            <Text style={{fontFamily: "MuseoModerno", fontSize: 20, fontWeight: "500", textAlign: "center", paddingBottom: 10}}>
-              {dateNamesToShow[parseInt(timeModal.slice(0,1))]}, {timeModal.split("-")[1]?.padStart(2, "0")}/{timeModal.split("-")[2]?.padStart(2, "0")}/{year}
-            </Text>
-            <View style={{height: 1, width: "70%", backgroundColor: "gray", alignSelf: "center"}}></View>
-            <View style={styles.modalView}>
-              {lichTuan?.map((item, index) => { 
-                return(
-                  <View key={index}>
-                    {timeModal.split("-")[1]?.padStart(2, "0") === item.daystart.slice(0, 2)
-                    && timeModal.split("-")[2]?.padStart(2, "0") === item.daystart.slice(3,5)
-                    && <View style={{width: "100%"}}>
-                        <TouchableOpacity onPress={() => handlePress(item.link)} >
-                          <View style={[
-                            styles.modalItem, 
-                            item.isTamNgung && {backgroundColor: "rgb(240,0,0,0.15)", opacity: 0.7}
-                            ]}>
-                            <View style={{flexDirection: "row", alignContent: "space-around", width: "100%"}}>
-                              <Text style={{fontFamily: "MuseoModerno", fontWeight: "500", fontSize: 17, marginBottom: 8, textDecorationLine: "underline", width: width * 0.6}}>
-                                {item.tenMonHoc}
-                              </Text>
-                              <Text style={{fontFamily: "MuseoModerno", fontWeight: "400", fontSize: 12, position: "absolute", right: 0, top: 5}}>
+          <Animated.View
+            style={[
+              styles.modalContent,
+              { transform: [{ translateX }, { translateY }, { scale: scaleAnim }] },
+              ]}
+          >
+            <Pressable style={styles.modalCont}>
+              <Text style={{fontFamily: "MuseoModerno", fontSize: 20, fontWeight: "500", textAlign: "center", paddingBottom: 10}}>
+                {dateNamesToShow[parseInt(timeModal.slice(0,1))]}, {timeModal.split("-")[1]?.padStart(2, "0")}/{timeModal.split("-")[2]?.padStart(2, "0")}/{year}
+              </Text>
+              <View style={{height: 1, width: "70%", backgroundColor: "gray", alignSelf: "center"}}></View>
+              <View style={styles.modalView}>
+                {lichTuan?.map((item, index) => { 
+                  return(
+                    <View key={index}>
+                      {timeModal.split("-")[1]?.padStart(2, "0") === item.daystart.slice(0, 2)
+                      && timeModal.split("-")[2]?.padStart(2, "0") === item.daystart.slice(3,5)
+                      && <View style={{width: "100%"}}>
+                          <TouchableOpacity onPress={() => handlePress(item.link)} >
+                            <View style={[
+                              styles.modalItem, 
+                              item.isTamNgung && {backgroundColor: "rgb(240,0,0,0.15)", opacity: 0.7}
+                              ]}>
+                              <View style={{flexDirection: "row", alignContent: "space-around", width: "100%"}}>
+                                <Text style={{fontFamily: "MuseoModerno", fontWeight: "500", fontSize: 17, marginBottom: 8, textDecorationLine: "underline", width: width * 0.6}}>
+                                  {item.tenMonHoc}
+                                </Text>
+                                <Text style={{fontFamily: "MuseoModerno", fontWeight: "400", fontSize: 12, position: "absolute", right: 0, top: 5}}>
                                 {!item.isTamNgung ? item.gioHoc.slice(0,5)
                                 :<View>
                                   <View style={{position: "absolute", height: 21, width: 20, borderRadius:5, backgroundColor: "rgb(255,0,0,0.8)", marginLeft: -0.8, marginTop : -1.8}}></View>
@@ -287,9 +341,9 @@ export default function HomeCalendar({userData}: {userData: any}) {
                             {item.isTamNgung && <View style={styles.tamNgung}><Text style={{fontFamily: "MuseoModerno", fontWeight: "500", fontSize: 14, color: "white", alignSelf: "center"}}>Tạm Ngưng</Text></View>}
                           </View>
                         </TouchableOpacity>
-                      </View>
-                    }
-                  </View>
+                    </View>
+                  }
+                </View>
               )})}
 
               {courses?.map((course, index) => { 
@@ -328,11 +382,12 @@ export default function HomeCalendar({userData}: {userData: any}) {
                     </View>
                     }
                   </View>
-              )})}
-            </View>
-          </View>
-        </Modal>
-      </View>
+                )})}
+              </View>
+            </Pressable>
+          </Animated.View>
+        </Pressable>
+      </Modal>
 
     </>
   );
@@ -352,22 +407,22 @@ const styles = StyleSheet.create({
     width: width,
   },
   modalContent: {
-    position: "absolute",
-    bottom: 0,
-    width: "100%",
     backgroundColor: "white",
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
-    padding: 20,
+    paddingTop: 20,
     alignItems: "center",
+    width: '90%',
+    minHeight: 200,
+    borderRadius: 12,
+    zIndex: 5,
   },
   modalCont: {
-    paddingTop: 30,
     paddingBottom: 40,
     paddingHorizontal: 20,
     backgroundColor: "white",
     borderRadius: 20,
-    marginTop: -50
+    width: '100%'
   },
   modalView: {
     backgroundColor: "white",
@@ -399,7 +454,7 @@ const styles = StyleSheet.create({
   container: {
     width: "100%",
     padding: width * 0.035,
-    marginTop: 10
+    marginTop: 15
   },
   card: {
     width: "100%",
@@ -451,8 +506,8 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap', 
     justifyContent: 'space-between',
     position: "absolute",
-    top: 36,
-    left: -80,
+    top: 40,
+    left: "-90%",
     width: 270,
     backgroundColor: "#d1d5db",
     borderRadius: 8,
@@ -463,7 +518,8 @@ const styles = StyleSheet.create({
     height: 50,
     width: '25%',
     alignItems: "center",
-    paddingVertical: 10
+    paddingVertical: 10,
+    borderRadius: 10
   },
   selectedMonth: {
     backgroundColor: "#9ca3af",
@@ -478,9 +534,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingTop: 12,
     paddingBottom: 12,
-    width: `${100 / 7}%`
   },
-  dayText: { fontFamily: "MuseoModerno",  fontSize: 18, fontWeight: "500" },
+  dayText: { 
+    fontFamily: "MuseoModerno",  
+    fontSize: 18, 
+    fontWeight: "500" 
+  },
   weekRow: {
     flexDirection: "row",
   },
@@ -491,6 +550,8 @@ const styles = StyleSheet.create({
     justifyContent: "flex-start",
     borderTopWidth: 1,
     borderColor: "#9ca3af",
+    width: "100%",
+    marginLeft: -2
   },
 
   /* ---- new styles for vertical lines ---- */
@@ -514,6 +575,7 @@ const styles = StyleSheet.create({
     marginVertical: -14
   },
   touchToModal: {
-    width: `${100 / 7}%`
+    alignItems: "center",
+    width: `${(100 / 7) + 0.05}%`
   }
 });

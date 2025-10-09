@@ -27,6 +27,7 @@ import {
   View
 } from "react-native";
 import { db } from "src/firebase/firebase";
+import { Portal } from 'react-native-paper';
 
 const { height, width } = Dimensions.get("window");
 
@@ -168,22 +169,23 @@ export default function DocumentPage() {
 
   return (
     <>
-      <ScrollView showsVerticalScrollIndicator={false} style={{ paddingTop: 26 }}>
+      <ScrollView showsVerticalScrollIndicator={false}>
         <TouchableWithoutFeedback onPress={() => { setIsLongPress(false); setSelected(undefined); }}>
           <View style={styles.container}>
             {isLongPressed && (
-              <View style={{width: width, height: height, position: "absolute", top: -30, left: 0, right: 0, bottom: 0,}}>
-                <View style={styles.overlay}></View>
-              </View>
+              <Portal>
+                <TouchableWithoutFeedback onPress={() => { setIsLongPress(false); setSelected(undefined); }}>
+                  <View style={{width: '100%', height: '100%', position: "absolute", top: 0, left: 0, right: 0, bottom: 0, }}>
+                    <View style={styles.overlay}></View>
+                  </View>
+                </TouchableWithoutFeedback>
+              </Portal>
             )}
             <View style={styles.card}>
-              <View style={{width: "100%", paddingVertical: 20}}> 
-                <Text style={{position: "absolute", width: "100%", paddingVertical: 25, fontFamily: "MuseoModerno", fontSize: 26, fontWeight: "500", textAlign: "center"}}>
-                  Document
-                </Text>
+              <View style={{width: "100%", alignItems: "flex-end", marginTop: -15}}> 
                 <TouchableOpacity 
                 onPress={() => {setShowAddSub(true);}}
-                style={{position: "absolute", right: "8%", bottom: -5, transform: [{translateX: "0%"}], borderWidth: 1, borderRadius: 7, paddingHorizontal: 5, borderColor: "gray"}}>
+                style={{width: 65, transform: [{translateX: -30}, {translateY: 35}], borderWidth: 1, borderRadius: 7, paddingHorizontal: 5, borderColor: "gray"}}>
                     <Text style={{fontWeight: "300", fontSize: 16, textAlign: "right", fontFamily: "MuseoModerno",}}>+ môn</Text>
                 </TouchableOpacity>
               </View>
@@ -343,12 +345,12 @@ export default function DocumentPage() {
 const styles = StyleSheet.create({
   container: {
     width: "100%",
-    padding: 16,
   },
   card: {
     width: "100%",
     backgroundColor: "white",
-    borderRadius: 16,
+    borderBottomLeftRadius: 16,
+    borderBottomRightRadius: 16,
     minHeight: height * 0.73
   },
   subText: {
@@ -363,6 +365,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     padding: 10,
     flexWrap: "wrap",
+    paddingTop: 0
   },
   doc: {
     height: 100,

@@ -1,7 +1,7 @@
 // Sidenav.tsx
 import { useAuth } from '@/src/context/AuthContext';
 import { usePathname, useRouter } from "expo-router";
-import { BookOpen, Calendar, House, FolderSymlink , Image } from "lucide-react-native";
+import { BookOpen, Calendar, House, FolderSymlink , AlarmClock  } from "lucide-react-native";
 import React, { useEffect } from "react";
 import { Dimensions, StyleSheet, TouchableOpacity, View } from "react-native";
 import Animated, {
@@ -18,8 +18,8 @@ const TABS = [
   { id: "coucalendar", href: "/coucalendar/page", icon: BookOpen },
   { id: "wcalendar", href: "/wcalendar/page", icon: Calendar },
   { id: "home", href: "/", icon: House },
-  { id: "document", href: "/document/page", icon: FolderSymlink  },
-  { id: "picture", href: "/picture/page", icon: Image},
+  { id: "itemsaved", href: "/itemsaved/page", icon: FolderSymlink  },
+  { id: "schedule", href: "/schedule/page", icon: AlarmClock },
 ] as const;
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");

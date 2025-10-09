@@ -1,12 +1,10 @@
 workflows:
-  ios-signed:
-    name: Build iOS signed .ipa (Expo)
+  ios-unsigned:
+    name: Build iOS unsigned .ipa (Expo)
     instance_type: mac_mini_m2
     max_build_duration: 120
     environment:
       node: 20
-      vars:
-        XCODE_SCHEME: "StuFlow"
     scripts:
       - name: Install dependencies
         script: |
@@ -18,11 +16,20 @@ workflows:
           cd ios
           pod install
           cd ..
-      - name: Build signed IPA
+      - name: Build unsigned IPA
         script: |
           cd ios
-          xcodebuild -workspace StuFlow.xcworkspace -scheme StuFlow -configuration Release -archivePath $CM_BUILD_DIR/StuFlow.xcarchive archive DEVELOPMENT_TEAM="" CODE_SIGN_IDENTITY="iPhone Developer"
-          xcodebuild -exportArchive -archivePath $CM_BUILD_DIR/StuFlow.xcarchive -exportPath $CM_BUILD_DIR -exportOptionsPlist ../exportOptions.plist
+          xcodebuild \
+            -workspace StuFlow.xcworkspace \
+            -scheme StuFlow \
+            -configuration Release \
+            -archivePath $CM_BUILD_DIR/StuFlow.xcarchive \
+            CODE_SIGNING_ALLOWED=NO \
+            archive
+          xcodebuild \
+            -exportArchive \
+            -archivePath $CM_BUILD_DIR/StuFlow.xcarchive \
+            -exportPath $CM_BUILD_DIR \
+            -exportOptionsPlist ../exportOptions.plist
     artifacts:
       - $CM_BUILD_DIR/*.ipa
-

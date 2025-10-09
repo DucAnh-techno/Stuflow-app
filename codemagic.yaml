@@ -1,0 +1,32 @@
+workflows:
+  ios-unsigned:
+    name: Build iOS unsigned .ipa (Expo)
+    instance_type: mac_mini_m2
+    max_build_duration: 120
+    environment:
+      node: 20
+    scripts:
+      - name: Install dependencies
+        script: |
+          npm install -g expo-cli
+          yarn install || npm install
+      - name: Expo prebuild
+        script: |
+          npx expo prebuild --platform ios --no-install
+          cd ios
+          pod install
+          cd ..
+      - name: Build unsigned ipa
+        script: |
+          cd ios
+          xcodebuild -workspace StuFlow.xcworkspace -scheme StuFlow -configuration Release -archivePath build/StuFlow.xcarchive archive CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO
+          cd ..
+          mkdir -p build
+          mkdir Payload
+          cp -R ios/build/StuFlow.xcarchive/Products/Applications/StuFlow.app Payload/
+          cd Payload
+          zip -r ../build/StuFlow-unsigned.ipa .
+          cd ..
+          rm -rf Payload
+    artifacts:
+      - build/*.ipa

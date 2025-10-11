@@ -1,13 +1,24 @@
+# Tạo file exportOptions.plist thủ công
+cat <<EOF > exportOptions.plist
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" \
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" 
 "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-  <key>method</key>
-  <string>development</string>
-  <key>signingStyle</key>
-  <string>automatic</string>
-  <key>compileBitcode</key>
-  <false/>
+  <key>method</key><string>ad-hoc</string>
+  <key>signingStyle</key><string>manual</string>
+  <key>compileBitcode</key><false/>
+  <key>signingCertificate</key><string></string>
+  <key>signingIdentity</key><string></string>
+  <key>provisioningProfiles</key><dict/>
+  <key>teamID</key><string></string>
 </dict>
 </plist>
+EOF
+
+# Export IPA không cần ký
+xcodebuild -exportArchive \
+           -archivePath ./build/StuFlow.xcarchive \
+           -exportPath ./build/ipa \
+           -exportOptionsPlist exportOptions.plist \
+           CODE_SIGNING_ALLOWED=NO

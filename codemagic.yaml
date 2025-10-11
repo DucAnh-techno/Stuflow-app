@@ -19,17 +19,33 @@ workflows:
       - name: Build unsigned IPA
         script: |
           cd ios
-          xcodebuild \
-            -workspace StuFlow.xcworkspace \
-            -scheme StuFlow \
-            -configuration Release \
-            -archivePath $CM_BUILD_DIR/StuFlow.xcarchive \
-            CODE_SIGNING_ALLOWED=NO \
-            archive
-          xcodebuild \
-            -exportArchive \
-            -archivePath $CM_BUILD_DIR/StuFlow.xcarchive \
-            -exportPath $CM_BUILD_DIR \
-            -exportOptionsPlist ../exportOptions.plist
+          xcodebuild -workspace StuFlow.xcworkspace \
+           -scheme StuFlow \
+           -configuration Release \
+           -sdk iphoneos \
+           -archivePath ./build/StuFlow.xcarchive \
+           CODE_SIGN_IDENTITY="" \
+           CODE_SIGNING_REQUIRED=NO \
+           CODE_SIGNING_ALLOWED=NO \
+           DEVELOPMENT_TEAM="" \
+           archive
+          xcodebuild -exportArchive \
+           -archivePath ./build/StuFlow.xcarchive \
+           -exportPath ./build/ipa \
+           -exportOptionsPlist <(echo '<?xml version="1.0" encoding="UTF-8"?>
+           <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" 
+           "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+           <plist version="1.0">
+           <dict>
+             <key>method</key><string>ad-hoc</string>
+             <key>signingStyle</key><string>manual</string>
+             <key>compileBitcode</key><false/>
+             <key>signingCertificate</key><string></string>
+             <key>signingIdentity</key><string></string>
+             <key>provisioningProfiles</key><dict/>
+             <key>teamID</key><string></string>
+           </dict>
+           </plist>') \
+           CODE_SIGNING_ALLOWED=NO
     artifacts:
       - $CM_BUILD_DIR/*.ipa

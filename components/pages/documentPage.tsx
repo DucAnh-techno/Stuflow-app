@@ -26,8 +26,8 @@ import {
   TouchableWithoutFeedback,
   View
 } from "react-native";
-import { db } from "src/firebase/firebase";
 import { Portal } from 'react-native-paper';
+import { db } from "src/firebase/firebase";
 
 const { height, width } = Dimensions.get("window");
 
@@ -40,8 +40,12 @@ export default function DocumentPage() {
   const [ filePick, setFilePick ] = useState<DocumentPicker.DocumentPickerResult | null>(null);
   const [ showInput, setShowInput ] = useState(false);
   const [ showAddSub, setShowAddSub ] = useState(false);
+
   const [isLongPressed, setIsLongPress] = useState(false);
   const [selected, setSelected] = useState<number | undefined>(undefined);
+  const [dataRmv, setDataRmv] = useState<{uri: string, subName: string} | null>(null);
+  const [pressPosition, setPressPosition] = useState<{ x: number; y: number } | null>(null);
+
 
   const [ focus, setFocus ] = useState(false);
   const [ focusD, setFocusD ] = useState(false);
@@ -144,11 +148,14 @@ export default function DocumentPage() {
     setSubjectName("");
   };
 
-  async function removeF( uri: string, subject: string) {
-    const res: any = await removeFile(uri, subject, user);
+  async function removeF( data: {uri: string, subName: string}) {
+    if (!data) {console.log('khong co du lieu file xoa')}
+    const {uri, subName} = data;
+    const res: any = await removeFile(uri, subName, user);
     setFiles(res);
-    setIsLongPress(false);
+    setIsLongPress(false);  
     setSelected(undefined);
+    setDataRmv(null);
   };
 
   async function removeSub(subject: string) {
@@ -167,18 +174,39 @@ export default function DocumentPage() {
     )
   };
 
+  const handleLongPress = (event: any) => {
+    const { pageX, pageY } = event;
+    setPressPosition({ x: pageX, y: pageY });  // lưu vị trí nhấn trên màn hình
+  };
+
   return (
     <>
       <ScrollView showsVerticalScrollIndicator={false}>
-        <TouchableWithoutFeedback onPress={() => { setIsLongPress(false); setSelected(undefined); }}>
+        <TouchableWithoutFeedback>
           <View style={styles.container}>
             {isLongPressed && (
               <Portal>
-                <TouchableWithoutFeedback onPress={() => { setIsLongPress(false); setSelected(undefined); }}>
-                  <View style={{width: '100%', height: '100%', position: "absolute", top: 0, left: 0, right: 0, bottom: 0, }}>
-                    <View style={styles.overlay}></View>
-                  </View>
-                </TouchableWithoutFeedback>
+                <View style={{ flex: 1 }}>
+                  <TouchableWithoutFeedback onPress={() => { setIsLongPress(false); setSelected(undefined); setDataRmv(null);}} >
+                    <View style={{width: '100%', height: '100%', position: "absolute", top: 0, left: 0, right: 0, bottom: 0, }}>
+                      <View style={styles.overlay}></View>
+                    </View>
+                  </TouchableWithoutFeedback>
+                  
+                  <Animated.View 
+                    style={[
+                      styles.menu,
+                      { transform: [{ scale }], zIndex: 999 },
+                      pressPosition && { top: pressPosition.y - 100, left: pressPosition.x - 25 }
+                    ]}
+                  >         
+                    <TouchableOpacity onPress={() => removeF(dataRmv!)}>
+                      <BlurView intensity={100} tint="light" style={styles.blurRm}>
+                        <Text style={styles.remove}>Xóa</Text>
+                      </BlurView>
+                    </TouchableOpacity>
+                  </Animated.View>
+                </View>
               </Portal>
             )}
             <View style={styles.card}>
@@ -200,25 +228,20 @@ export default function DocumentPage() {
                     <View style={{flexDirection: "row", flexWrap: "wrap",}}>
                       {file.files.map((item, i) => (
                       <View key={i} style={{ alignItems: "center" }}>
-                        <TouchableOpacity style={{zIndex: 102}} onPress={() => Linking.openURL(item.uri)} onLongPress={() => {setSelected(index * 1000 + i); setIsLongPress(true)}}>
+                        <TouchableOpacity style={{zIndex: 102}} onPress={() => Linking.openURL(item.uri)} 
+                        onLongPress={(e) => {
+                          setSelected(index * 1000 + i); 
+                          setIsLongPress(true);
+                          setDataRmv({uri: item.uri, subName: file.subName});
+                          handleLongPress(e.nativeEvent);
+                          }}
+                          >
                           <View style={[styles.doc, selected === (index * 1000 + i) && styles.selectedFile]}>
                             <Image source={{uri: item.uri  }} style={styles.avatar}></Image>
                           </View>
                         </TouchableOpacity>
 
-                          <Animated.View key={`${index}${i}`}
-                            style={[
-                              styles.menu,
-                              { transform: [{ scale }] },
-                              isLongPressed && selected === (index * 1000 + i) && styles.index
-                            ]}
-                          >         
-                            <TouchableOpacity onPress={() => removeF(item.uri, file.subName)}>
-                              <BlurView intensity={100} tint="light" style={styles.blurRm}>
-                                <Text style={styles.remove}>Xóa</Text>
-                              </BlurView>
-                            </TouchableOpacity>
-                          </Animated.View>
+
                         
                         <Text style={{fontFamily: "MuseoModerno", width: 80, height: 25, textAlign: "center", overflow: "hidden"}}>{item.name}.pdf</Text>
                         
@@ -326,6 +349,7 @@ export default function DocumentPage() {
                   setShowInput(false); 
                   setSubjectName(""); 
                   setError("");
+                  setShowAddSub(false);
                   }} 
                   style={styles.cancelBtn}>
                   <Text style={{ color: "black", fontSize: 16, paddingHorizontal: 30 }}>Hủy</Text>
@@ -351,7 +375,7 @@ const styles = StyleSheet.create({
     backgroundColor: "white",
     borderBottomLeftRadius: 16,
     borderBottomRightRadius: 16,
-    minHeight: height * 0.73
+    minHeight: height * 0.68
   },
   subText: {
     fontFamily: "MuseoModerno",
@@ -530,8 +554,6 @@ const styles = StyleSheet.create({
   },
   menu: {
     position: "absolute",
-    top: -40,
-    right: 31,
     backgroundColor: "rgba(255,255,255,1)",
     borderRadius: 100,
     shadowColor: "#000",
@@ -540,9 +562,6 @@ const styles = StyleSheet.create({
     shadowRadius: 5,
     elevation: 5,
     zIndex: -1,
-  },
-  index: {
-    zIndex: 102,
   },
   avatar: { 
     width: "100%", 

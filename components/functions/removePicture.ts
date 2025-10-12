@@ -3,7 +3,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { db } from "src/firebase/firebase";
 
-export async function removePicture( uri: string, subject: string, user: string | null) {
+export async function removePicture( uri: string, subName: string, user: string | null) {
     if(!user) {console.error('khong co user'); return;}
 
     const docSnap = (await getDoc(doc(db, "users", user)));
@@ -17,7 +17,7 @@ export async function removePicture( uri: string, subject: string, user: string 
     const newPicture = [];
 
     for ( const sub of fileData ){
-        if( sub.subName === subject) {
+        if( sub.subName === subName) {
             const temp = sub.pictures.filter(item => item.uri !== uri);
             sub.pictures = temp;
             newPicture.push(sub);

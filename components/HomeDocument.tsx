@@ -28,10 +28,10 @@ export default function HomeDocument({userData}: {userData: any}) {
       <View style={styles.card}>
         {/* Header */}
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.push("/(tabs)/document/page")}>
+          <TouchableOpacity onPress={() => router.replace("/(tabs)/itemsaved/page")}>
             <Text style={styles.title}>Tài liệu</Text>
           </TouchableOpacity>
-          <TouchableOpacity onPress={() => router.push("/(tabs)/document/page")}>
+          <TouchableOpacity onPress={() => router.push("/(tabs)/itemsaved/page")}>
             <Text style={styles.allText}>Tất cả</Text>
           </TouchableOpacity>
         </View>

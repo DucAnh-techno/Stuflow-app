@@ -234,24 +234,28 @@ export default function HomeCalendar({userData}: {userData: any}) {
                       ))}
                       
                       {/* Chấm Green cho Course bắt đầu */}
-                      {courses.map((item, cIndex) => (
-                        <View key={cIndex} style={{ flexDirection: "row", }}>
-                          {!eventKey.includes(item.eventtype) && parseInt(item.daystart.substring(0, 2), 10) === day && parseInt(item.daystart.substring(3, 5), 10) === (month + 1) ?
-                            <Text style={[styles.dot, { color: "rgb(83, 255, 26)" }]}>&bull;</Text>
-                            : null
-                          }
-                        </View>
-                      ))}
+                      <View style={{flexDirection: 'row'}}>
+                        {courses.map((item, cIndex) => (
+                          <View key={cIndex} style={{ flexDirection: "row", }}>
+                            {!eventKey.includes(item.eventtype) && parseInt(item.daystart.substring(0, 2), 10) === day && parseInt(item.daystart.substring(3, 5), 10) === (month + 1) ?
+                              <Text style={[styles.dot, { color: "rgb(83, 255, 26)" }]}>&bull;</Text>
+                              : null
+                            }
+                          </View>
+                        ))}
+                      </View>
 
                       {/* Chấm Red cho Course kết thúc */}
-                      {courses.map((item, cIndex) => (
-                        <View key={cIndex} style={{ flexDirection: "row", }}>
-                          {eventKey.includes(item.eventtype) && parseInt(item.daystart.substring(0, 2), 10) === day && parseInt(item.daystart.substring(3, 5), 10) === (month + 1) ?
-                            <Text style={[styles.dot, { color: "red" }]}>&bull;</Text>
-                            : null
-                          }
-                        </View>
-                      ))}
+                      <View style={{flexDirection: 'row'}}>
+                        {courses.map((item, cIndex) => (
+                          <View key={cIndex} style={{ flexDirection: "row", }}>
+                            {eventKey.includes(item.eventtype) && parseInt(item.daystart.substring(0, 2), 10) === day && parseInt(item.daystart.substring(3, 5), 10) === (month + 1) ?
+                              <Text style={[styles.dot, { color: "red" }]}>&bull;</Text>
+                              : null
+                            }
+                          </View>
+                        ))}
+                      </View>
 
                     </View>
                   </Pressable>
@@ -572,7 +576,7 @@ const styles = StyleSheet.create({
   dot: {
     fontSize: 32,
     marginHorizontal: -2,
-    marginVertical: -14
+    marginVertical: -14,
   },
   touchToModal: {
     alignItems: "center",

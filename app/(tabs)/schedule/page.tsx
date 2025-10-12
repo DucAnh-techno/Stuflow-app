@@ -1,16 +1,19 @@
-import { createSchedule } from '@/components/functions/schedule/createSchedule';
-import { getWeekDayNumbersFrom } from '@/components/functions/schedule/getday';
-import { useAuth } from '@/src/context/AuthContext';
-import { Schedule } from '@/types';
-import { router } from 'expo-router';
+// app/(tabs)/schedule/page.tsx
+import { createSchedule } from "@/components/functions/schedule/createSchedule";
+import { getWeekDayNumbersFrom } from "@/components/functions/schedule/getday";
+import { removeSchedule } from "@/components/functions/schedule/removeSchedule";
+import { useAuth } from "@/src/context/AuthContext";
+import { Schedule } from "@/types";
+import { router } from "expo-router";
 import { doc, getDoc } from "firebase/firestore";
 import { Calendar } from "lucide-react-native";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Animated,
   Dimensions,
   Modal,
   Pressable,
+  RefreshControl,
   SafeAreaView,
   ScrollView,
   StyleSheet,
@@ -19,51 +22,67 @@ import {
   TouchableOpacity,
   TouchableWithoutFeedback,
   View,
-  RefreshControl
 } from "react-native";
-import DateTimePickerModal from 'react-native-modal-datetime-picker';
+import DateTimePickerModal from "react-native-modal-datetime-picker";
 import { db } from "src/firebase/firebase";
-import { removeSchedule } from '@/components/functions/schedule/removeSchedule';
+
+/**
+ * SchedulePage — cleaned & fixed
+ *
+ * Sửa chính:
+ * - Hooks ở cấp cao nhất (không gọi điều kiện).
+ * - Handlers dùng useCallback.
+ * - Animated style: đặt opacity trong object style { opacity }.
+ * - Kiểm tra user & dữ liệu trước khi gọi API.
+ * - Tránh truy cập thuộc tính trên undefined (sử dụng optional chaining).
+ * - Chuẩn hóa parseInt(..., 10).
+ * - Tối ưu nhỏ: memoize weeks/day list.
+ *
+ * Giữ nguyên logic: hiển thị tuần, add/remove schedule, popup chi tiết.
+ */
 
 const dateNames = ["T2", "T3", "T4", "T5", "T6", "T7", "CN"];
 const { height, width } = Dimensions.get("window");
 const months = Array.from({ length: 12 }).map((_, i) => i + 1);
 
-
 export default function SchedulePage() {
   const [refreshing, setRefreshing] = useState(false);
-  const { user, reload, setReload} = useAuth();
-  const [ schedule, setSchedule] = useState<Schedule[] | []>([])
-  const today = new Date();
-  const [month, setMonth] = useState(today.getMonth());
-  const [year] = useState(today.getFullYear());
-  const [isOpen, setIsOpen] = useState(false);
-  const [day, setDay] = useState<string[] | []>([]);
-  const [date,setDate] = useState<Date>(new Date());
+  const { user, reload, setReload } = useAuth();
+
+  const [schedule, setSchedule] = useState<Schedule[]>([]);
+  const today = useMemo(() => new Date(), []);
+  const [month, setMonth] = useState<number>(today.getMonth());
+  const [year] = useState<number>(today.getFullYear());
+
+  const [isOpen, setIsOpen] = useState(false); // month dropdown open
+  const [day, setDay] = useState<string[]>(() => getWeekDayNumbersFrom(new Date()));
+  const [date, setDate] = useState<Date>(() => new Date());
 
   const [scheSelected, setScheSelected] = useState<Schedule | null>(null);
-  const [time, setTime] = useState(new Date());
+  const [time, setTime] = useState<Date>(new Date());
   const [content, setContent] = useState<string>("");
   const [error, setError] = useState<string>("");
 
-  const [visible, setVisible] = useState(false);
-  const [showAdd, setShowadd] = useState(false);
+  const [visible, setVisible] = useState(false); // detail modal
+  const [showAdd, setShowadd] = useState(false); // add modal
   const [datePickerShow, setDatePickerShow] = useState(false);
 
+  // Animated values (declared once)
   const scaleAnim = useRef(new Animated.Value(0)).current;
   const translateX = useRef(new Animated.Value(0)).current;
   const translateY = useRef(new Animated.Value(0)).current;
 
-
   const scale = useRef(new Animated.Value(0.6)).current;
   const opacity = useRef(new Animated.Value(0)).current;
 
+  // fetch user schedule
   useEffect(() => {
     let mounted = true;
     async function collectUserData() {
       if (!user) {
+        console.warn("SchedulePage: no user, redirecting to login");
         setSchedule([]);
-        router.replace('/login/page');
+        router.replace("/login/page");
         return;
       }
       try {
@@ -71,8 +90,11 @@ export default function SchedulePage() {
         if (!mounted) return;
         if (docSnap.exists()) {
           const data = docSnap.data();
-          setSchedule(data.schedule)
+          // ensure schedule is array
+          setSchedule(Array.isArray(data?.schedule) ? data.schedule : []);
+          console.log("SchedulePage: schedule loaded");
         } else {
+          console.warn("SchedulePage: user doc not found, redirecting");
           setSchedule([]);
           router.replace("/login/page");
         }
@@ -82,9 +104,12 @@ export default function SchedulePage() {
       }
     }
     collectUserData();
-    return () => { mounted = false; };
+    return () => {
+      mounted = false;
+    };
   }, [user, reload]);
-  
+
+  // animate popup open/close
   useEffect(() => {
     opacity.stopAnimation();
     scale.stopAnimation();
@@ -108,46 +133,49 @@ export default function SchedulePage() {
     }
   }, [isOpen, opacity, scale]);
 
+  // recompute week days when date or reload changes
   useEffect(() => {
-    setDay(getWeekDayNumbersFrom(date));
-  }, [date, reload])
+    try {
+      const days = getWeekDayNumbersFrom(date);
+      setDay(days);
+    } catch (err) {
+      console.error("Error computing week days from date:", err);
+      setDay([]);
+    }
+  }, [date, reload]);
 
+  // ----- Handlers (useCallback) -----
+  const toggle = useCallback(() => setIsOpen((v) => !v), []);
 
-  const toggle = () => setIsOpen(!isOpen);
-
-  const handleSelect = (m: number) => {
+  const handleSelect = useCallback((m: number) => {
     setMonth(m);
     const newDate = new Date(date);
     newDate.setMonth(m);
     setDate(newDate);
     setIsOpen(false);
-  };
+  }, [date]);
 
-  const prevWeek = () => {
+  const prevWeek = useCallback(() => {
     const newDate = new Date(date);
     newDate.setDate(newDate.getDate() - 7);
     setDate(newDate);
-  };
+  }, [date]);
 
-  const nextWeek = () => {
+  const nextWeek = useCallback(() => {
     const newDate = new Date(date);
     newDate.setDate(newDate.getDate() + 7);
     setDate(newDate);
-  };
+  }, [date]);
 
-  const temp = [1,2,3,4];
+  // simple four slots representing 00-06, 06-12, 12-18, 18-24
+  const hourSlots = useMemo(() => [1, 2, 3, 4], []);
 
-
-  const handlePress = ( nativeEvent: { pageX: number; pageY: number }) => {
+  const handlePress = useCallback((nativeEvent: { pageX: number; pageY: number }) => {
     const { pageX, pageY } = nativeEvent;
-
-    // đặt vị trí ban đầu cho animation (tính trung tâm màn hình)
-    // translateX, translateY là Animated.Value từ trước
     translateX.setValue(pageX - width / 2);
     translateY.setValue(pageY - height / 2);
     scaleAnim.setValue(0.1);
 
-    // bắt đầu animation phóng to và dịch chuyển vào giữa
     Animated.parallel([
       Animated.spring(scaleAnim, {
         toValue: 1,
@@ -162,18 +190,14 @@ export default function SchedulePage() {
         useNativeDriver: true,
       }),
     ]).start();
-  };
+  }, [scaleAnim, translateX, translateY]);
 
-  const handleDatetime = ( nativeEvent: { pageX: number; pageY: number }) => {
+  const handleDatetime = useCallback((nativeEvent: { pageX: number; pageY: number }) => {
     const { pageX, pageY } = nativeEvent;
-
-    // đặt vị trí ban đầu cho animation (tính trung tâm màn hình)
-    // translateX, translateY là Animated.Value từ trước
     translateX.setValue(pageX - width / 3);
     translateY.setValue(pageY - height / 3);
     scaleAnim.setValue(0.1);
 
-    // bắt đầu animation phóng to và dịch chuyển vào giữa
     Animated.parallel([
       Animated.spring(scaleAnim, {
         toValue: 1,
@@ -188,341 +212,305 @@ export default function SchedulePage() {
         useNativeDriver: true,
       }),
     ]).start();
-  };
+  }, [scaleAnim, translateX, translateY]);
 
-  const closePopup = () => {
+  const closePopup = useCallback(() => {
     setVisible(false);
     setScheSelected(null);
-  };
+  }, []);
 
-  const createHandle = async () => {
-    if (content === "") {setError("Hãy nhập nội dung công việc!!!")}
+  const createHandle = useCallback(async () => {
+    if (!user) {
+      console.error("createHandle: no user in context");
+      setError("Bạn chưa đăng nhập");
+      return;
+    }
+    if (!content || content.trim() === "") {
+      setError("Hãy nhập nội dung công việc!!!");
+      return;
+    }
 
-    await createSchedule(time, user!, content);
+    try {
+      await createSchedule(time, user, content);
+      setContent("");
+      setError("");
+      setShowadd(false);
+      setReload(new Date());
+      console.log("SchedulePage: created schedule");
+    } catch (err) {
+      console.error("createHandle error:", err);
+      setError("Không thể thêm công việc, thử lại sau.");
+    }
+  }, [content, time, user, setReload]);
 
-    setContent('');
-    setError('');
-    setShowadd(false);
-    setReload(new Date());
-  };
+  const removeHandle = useCallback(async () => {
+    if (!scheSelected) {
+      console.warn("removeHandle: no selected schedule");
+      return;
+    }
+    if (!user) {
+      console.error("removeHandle: no user");
+      return;
+    }
+    try {
+      await removeSchedule(scheSelected, user);
+      setVisible(false);
+      setScheSelected(null);
+      setReload(new Date());
+      console.log("SchedulePage: removed schedule");
+    } catch (err) {
+      console.error("removeHandle error:", err);
+    }
+  }, [scheSelected, user, setReload]);
 
-  const removeHandle = async() => {
-    if (!scheSelected) {console.log('khong tim thay schedule'); return}
-
-    await removeSchedule(scheSelected, user!);
-
-    setVisible(false);
-    setScheSelected(null);
-    setReload(new Date());
-  };
-
-  const onRefresh = () => {
+  const onRefresh = useCallback(() => {
     setRefreshing(true);
+    try {
+      setReload(new Date());
+    } catch (err) {
+      console.error("onRefresh error:", err);
+    } finally {
+      setTimeout(() => setRefreshing(false), 500);
+    }
+  }, [setReload]);
 
-    setReload(new Date());
+  // ----- Derived / memo values -----
+  const weeks = useMemo(() => day, [day]); // day already computed via getWeekDayNumbersFrom
 
-    setRefreshing(false)
-  };
+  // Safe schedule array already in state; but ensure arrayness
+  const safeSchedule = useMemo(() => Array.isArray(schedule) ? schedule : [], [schedule]);
 
-
-    return(
-    <ScrollView 
+  // ----- Render -----
+  return (
+    <ScrollView
       refreshControl={
         <RefreshControl
           refreshing={refreshing}
           onRefresh={onRefresh}
-          colors={["#2196F3"]}            // màu vòng xoay (Android)
-          tintColor="#2196F3"             // màu vòng xoay (iOS)
-          title="Đang tải..."             // iOS: chữ hiện khi kéo
-          progressBackgroundColor="#fff"  // nền vòng xoay (Android)
+          colors={["#2196F3"]}
+          tintColor="#2196F3"
+          title="Đang tải..."
+          progressBackgroundColor="#fff"
         />
       }
     >
-      <TouchableWithoutFeedback onPress={() => {setIsOpen(false); }}>
+      <TouchableWithoutFeedback onPress={() => setIsOpen(false)}>
         <View style={styles.container}>
-            <View style={styles.card}>
-                <View style={styles.header}>
-                    <Text style={styles.headeText}>Week Schedule</Text>
-                    <Pressable 
-                    style={{position: "absolute", right: 10, borderRadius: 7, backgroundColor: "#ddd", paddingHorizontal: 5}}
-                    onPress={(e) => {handlePress(e.nativeEvent); setShowadd(true);}}
-                    >
-                      <Text style={{fontFamily: "MuseoModerno", fontSize: 16}}>Thêm</Text>
-                    </Pressable>
-                </View>
+          <View style={styles.card}>
+            <View style={styles.header}>
+              <Text style={styles.headeText}>Week Schedule</Text>
 
-                <View style={{width: "100%"}}>
-                    <View style={styles.monthSelector}>
-                        <TouchableOpacity onPress={prevWeek} style={styles.arrowButton}>
-                            <Text style={styles.arrow}>&lt;</Text>
+              <Pressable
+                style={{ position: "absolute", right: 10, borderRadius: 7, backgroundColor: "#ddd", paddingHorizontal: 5 }}
+                onPress={(e) => {
+                  handlePress(e.nativeEvent);
+                  setShowadd(true);
+                }}
+              >
+                <Text style={{ fontFamily: "MuseoModerno", fontSize: 16 }}>Thêm</Text>
+              </Pressable>
+            </View>
+
+            <View style={{ width: "100%" }}>
+              <View style={styles.monthSelector}>
+                <TouchableOpacity onPress={prevWeek} style={styles.arrowButton}>
+                  <Text style={styles.arrow}>&lt;</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity style={styles.monthTextWrapper} onPressIn={(e) => { handleDatetime(e.nativeEvent); toggle(); }}>
+                  <Text style={styles.monthText}>
+                    {weeks?.[0]?.slice(8, 10) ?? "--"}-{weeks?.[6]?.slice(8, 10) ?? "--"}/{weeks?.[0]?.slice(5, 7) ?? "--"}/{weeks?.[0]?.slice(0, 4) ?? year}
+                  </Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity onPress={nextWeek} style={styles.arrowButton}>
+                  <Text style={styles.arrow}>&gt;</Text>
+                </TouchableOpacity>
+
+                {isOpen && (
+                  <TouchableWithoutFeedback onPress={() => setIsOpen(false)}>
+                    <View style={{ flex: 1, position: "absolute", top: 60, left: 10, zIndex: 999 }}>
+                      <Animated.View
+                        style={[
+                          styles.dropdown,
+                          { opacity: opacity }, // correct animated opacity usage
+                          { transform: [{ scale: scaleAnim }, { translateX: translateX }, { translateY: translateY }] },
+                        ]}
+                      >
+                        {months.map((m, idx) => (
+                          <TouchableOpacity key={idx} style={[styles.dropdownItem, idx === month && styles.selectedMonth]} onPress={() => handleSelect(idx)}>
+                            <Text style={{ fontFamily: "MuseoModerno" }}>{m}/{year}</Text>
+                          </TouchableOpacity>
+                        ))}
+                      </Animated.View>
+                    </View>
+                  </TouchableWithoutFeedback>
+                )}
+              </View>
+            </View>
+
+            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+              <Pressable>
+                {/* Day Names & grid */}
+                <View style={styles.weekHeader}>
+                  <View style={[styles.dayCell]}>
+                    <View style={{ height: "12%", paddingTop: 10 }}>
+                      <Text style={[styles.dayText, { textAlign: "center" }]}>Thời gian</Text>
+                    </View>
+                    <View>
+                      <View style={[styles.hourcell, { borderTopWidth: 0 }]}><Text>00:00-06:00</Text></View>
+                      <View style={styles.hourcell}><Text>06:00-12:00</Text></View>
+                      <View style={styles.hourcell}><Text>12:00-18:00</Text></View>
+                      <View style={styles.hourcell}><Text>18:00-24:00</Text></View>
+                    </View>
+                  </View>
+
+                  {dateNames.map((d, s) => {
+                    const currentDD = Number(weeks?.[s]?.slice(8, 10));
+                    const currentMM = Number(weeks?.[s]?.slice(5, 7));
+
+                    return (
+                      <View key={s} style={[styles.dayCell, styles.verticalBorder]}>
+                        <TouchableOpacity style={{ paddingBottom: 13 }}>
+                          <Text style={styles.dayText}>{d}</Text>
+                          <Text>{weeks?.[s]?.slice(8, 10) ?? "--"}</Text>
                         </TouchableOpacity>
 
-                        <TouchableOpacity 
-                        
-                        style={styles.monthTextWrapper}
-                        onPressIn={(e) => {handleDatetime(e.nativeEvent); toggle()}}
-                        >
-                            <Text style={styles.monthText}>{day[0]?.slice(8,10)}-{day[6]?.slice(8,10)}/{day[0]?.slice(5,7)}/{day[0]?.slice(0,4)}</Text>
-                        </TouchableOpacity>
+                        {hourSlots.map((hour, index) => (
+                          <View key={index} style={[styles.mainCell, index === 0 && { borderTopWidth: 0 }]}>
+                            <View style={{ width: "100%", flexDirection: "column", flexWrap: "wrap" }}>
+                              {safeSchedule.map((item, i) => {
+                                const ddNum = Number(item.daystart?.slice(8, 10));
+                                const mmNum = Number(item.daystart?.slice(5, 7));
+                                // timestart like "13:30": parse hours then divide by 6 (original logic)
+                                const parsedHour = Number(item.timestart?.slice(0, 2));
+                                const timeBlock = !Number.isNaN(parsedHour) ? parsedHour / 6 : -1;
 
-                        <TouchableOpacity onPress={nextWeek} style={styles.arrowButton}>
-                            <Text style={styles.arrow}>&gt;</Text>
-                        </TouchableOpacity>
-
-                        {isOpen && (
-                        <Animated.View style={[
-                            styles.dropdown,
-                            opacity,
-                            { transform: [{ scale: scaleAnim }, {translateX}, {translateY}] },
-                            ]}>
-                            {months.map((m, idx) => (
-                            <TouchableOpacity
-                                key={idx}
-                                style={[styles.dropdownItem, idx === month && styles.selectedMonth]}
-                                onPress={() => handleSelect(idx)}
-                            >
-                                <Text style={{fontFamily: "MuseoModerno", }}>{m}/{year}</Text>
-                            </TouchableOpacity>
-                            ))}
-                        </Animated.View>
-                        )}
-                    </View>
-                </View>
-
-
-                <ScrollView horizontal={true} showsHorizontalScrollIndicator={false}>
-                  <Pressable>
-                    {/* Day Names */}
-                    <View style={styles.weekHeader}>
-                        <View style={[styles.dayCell]}>
-                          <View style={{height: "12%", paddingTop: 10}}>
-                            <Text style={[styles.dayText, {textAlign: "center"}]}>Thời gian</Text>
+                                return (
+                                  <View key={i}>
+                                    {ddNum === currentDD && mmNum === currentMM && timeBlock >= (hour - 1) && timeBlock < hour && (
+                                      <Pressable
+                                        style={[styles.scheCell, { backgroundColor: item.color ?? "#ccc" }]}
+                                        onPress={(e) => { handlePress(e.nativeEvent); setScheSelected(item); setVisible(true); }}
+                                      >
+                                        <Text style={{ fontFamily: "MuseoModerno", fontSize: 16 }}>{item.timestart}</Text>
+                                      </Pressable>
+                                    )}
+                                  </View>
+                                );
+                              })}
+                            </View>
                           </View>
-                          <View >
-                              <View style={[styles.hourcell, {borderTopWidth: 0}]}><Text>00:00-06:00</Text></View>
-                              <View style={styles.hourcell}><Text>06:00-12:00</Text></View>
-                              <View style={styles.hourcell}><Text>12:00-18:00</Text></View>
-                              <View style={styles.hourcell}><Text>18:00-24:00</Text></View>
-                          </View>
-                        </View>
-                      {dateNames?.map((d, s) => {
-                        const currentDD = parseInt(day[s]?.slice(8,10));
-                        const currentMM = parseInt(day[s]?.slice(5,7));
-
-                        return(
-                          <View
-                            key={s}
-                            style={[
-                              styles.dayCell,
-                              styles.verticalBorder,   
-                            ]}
-                          >
-                            <TouchableOpacity style={{paddingBottom: 13}}>
-                              <Text style={styles.dayText}>{d}</Text>
-                              <Text>{day[s]?.slice(8,10)}</Text>
-                            </TouchableOpacity>
-
-                            {temp.map((hour, index) => (
-                              <View
-                              key={index}
-                              style={[styles.mainCell, index === 0 && {borderTopWidth: 0}]}
-                              > 
-                                <View style={{width: "100%", flexDirection: 'column', flexWrap: 'wrap'}}>
-
-                                  {schedule?.map((item, i) => {
-                                    const dd = parseInt(item.daystart.slice(8,10));
-                                    const mm = parseInt(item.daystart.slice(5,7));
-                                    const time = parseInt(item.timestart.slice(0,2)) / 6;
-
-                                    return (
-                                    <View key={i}>
-                                      {dd === currentDD && mm === currentMM && time >= (hour - 1) && time < (hour) &&
-                                        <Pressable 
-                                        key={i}
-                                        style={[styles.scheCell, {backgroundColor: item.color}]}
-                                        onPress={(e) => {handlePress(e.nativeEvent); setScheSelected(item); setVisible(true);}}
-                                        >
-                                          <Text style={{fontFamily: "MuseoModerno", fontSize: 16}}>{item.timestart}</Text>
-                                        </Pressable>
-                                      }
-                                    </View>
-                                  )})}
-
-                                </View>
-                              </View>
-                            ))}
-                          </View>
-                      )})}
-                    </View>
-                    <View style={styles.mainborder}></View>
-                  </Pressable>
-
-                </ScrollView>
-
-
-              <Modal visible={visible} transparent animationType="none">
-                <Pressable
-                  style={{
-                    flex: 1,
-                    backgroundColor: "rgba(0,0,0,0.4)",
-                    justifyContent: "center",
-                    alignItems: "center",
-                  }}
-                  onPress={closePopup}
-                >
-                  <Animated.View
-                    style={{
-                      width: 250,
-                      minHeight: 180,
-                      backgroundColor: scheSelected?.color,
-                      borderRadius: 12,
-                      padding: 20, 
-                      zIndex: 5,
-                      transform: [
-                        { translateX },
-                        { translateY },
-                        { scale: scaleAnim },
-                      ],
-                    }}
-                  >
-                    <Text style={{ fontSize: 22, fontWeight: "bold", textAlign: "center", marginBottom: 10, fontFamily: "MuseoModerno" }}>Công việc</Text>
-                    <Text style={{ fontSize: 16, fontWeight: "500", fontFamily: "MuseoModerno" }}>
-                      Ngày:  {scheSelected?.daystart.slice(8,10)}-{scheSelected?.daystart.slice(5,7)}-{scheSelected?.daystart.slice(0,4)}
-                    </Text>
-                    <Text style={{ fontSize: 16, fontWeight: "500", fontFamily: "MuseoModerno" }}>
-                      Giờ:  {scheSelected?.timestart}                      
-                    </Text>
-                    <View style={{flexDirection: "row"}}>
-                      <Text style={{ fontSize: 16, fontWeight: "600", fontFamily: "MuseoModerno", marginTop: 10, width: 85}}>Nội dung:</Text>
-                      <Text style={{ fontSize: 16, fontWeight: "500", fontFamily: "MuseoModerno", marginTop: 10 }}>
-                        {scheSelected?.name}
-                      </Text>
-                    </View>
-                    
-                    <TouchableOpacity
-                      onPress={() => {removeHandle()}}
-                      style={{position: "absolute", top: 10, right: 10, }}
-                    >
-                      <View style={{padding: 5, backgroundColor: "#eee", borderRadius: 10}}>
-                        <Text>Xóa</Text>
+                        ))}
                       </View>
-                    </TouchableOpacity>
+                    );
+                  })}
+                </View>
+
+                <View style={styles.mainborder} />
+              </Pressable>
+            </ScrollView>
+
+            {/* Detail Modal */}
+            <Modal visible={visible} transparent animationType="none">
+              <Pressable style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.4)", justifyContent: "center", alignItems: "center" }} onPress={closePopup}>
+                <Animated.View
+                  style={{
+                    width: 250,
+                    minHeight: 180,
+                    backgroundColor: scheSelected?.color ?? "white",
+                    borderRadius: 12,
+                    padding: 20,
+                    zIndex: 5,
+                    transform: [{ translateX: translateX }, { translateY: translateY }, { scale: scaleAnim }],
+                  }}
+                >
+                  <Text style={{ fontSize: 22, fontWeight: "bold", textAlign: "center", marginBottom: 10, fontFamily: "MuseoModerno" }}>Công việc</Text>
+                  <Text style={{ fontSize: 16, fontWeight: "500", fontFamily: "MuseoModerno" }}>
+                    Ngày: {scheSelected ? `${scheSelected.daystart.slice(8, 10)}-${scheSelected.daystart.slice(5, 7)}-${scheSelected.daystart.slice(0, 4)}` : "--"}
+                  </Text>
+                  <Text style={{ fontSize: 16, fontWeight: "500", fontFamily: "MuseoModerno" }}>
+                    Giờ: {scheSelected?.timestart ?? "--"}
+                  </Text>
+                  <View style={{ width: '80%', height: 1, backgroundColor: 'grey', alignSelf: 'center', marginVertical: 10 }} />
+                  <View>
+                    <Text style={{ fontSize: 16, fontWeight: "600", fontFamily: "MuseoModerno", width: 85 }}>Nội dung:</Text>
+                    <Text style={{ fontSize: 16, fontWeight: "500", fontFamily: "MuseoModerno" }}>{scheSelected?.name ?? "--"}</Text>
+                  </View>
+
+                  <TouchableOpacity onPress={removeHandle} style={{ position: "absolute", top: 10, right: 10 }}>
+                    <View style={{ padding: 5, backgroundColor: "#eee", borderRadius: 10 }}>
+                      <Text>Xóa</Text>
+                    </View>
+                  </TouchableOpacity>
+                </Animated.View>
+              </Pressable>
+            </Modal>
+
+            {/* Add Modal */}
+            <Modal visible={showAdd} transparent animationType="none">
+              <Pressable
+                style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.4)", justifyContent: "center", alignItems: "center" }}
+                onPress={() => { setShowadd(false); setError(""); setContent(""); }}
+              >
+                <Pressable>
+                  <Animated.View style={{ width: 300, minHeight: 350, backgroundColor: "white", borderRadius: 12, transform: [{ translateX: translateX }, { translateY: translateY }, { scale: scaleAnim }] }}>
+                    <SafeAreaView style={{ flex: 1 }}>
+                      <View style={{ padding: 20, flex: 1, justifyContent: "center", alignItems: "center", width: "100%", height: "100%" }}>
+                        <TouchableOpacity style={{ width: "100%" }} onPress={() => setDatePickerShow(true)}>
+                          <View style={styles.selectTimeView}>
+                            <Calendar size={32} />
+                            <View style={{ backgroundColor: "#fff", borderRadius: 10, padding: 5, marginLeft: 20, marginRight: 5 }}>
+                              <Text style={{ fontFamily: "MuseoModerno", fontSize: 16 }}>{time ? time.toLocaleDateString() : "No date selected"}</Text>
+                            </View>
+
+                            <View style={{ backgroundColor: "#fff", borderRadius: 10, padding: 5 }}>
+                              <Text style={{ fontFamily: "MuseoModerno", fontSize: 16 }}>{time ? time.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit", hour12: false, timeZone: "Asia/Ho_Chi_Minh" }) : "No date selected"}</Text>
+                            </View>
+                          </View>
+                        </TouchableOpacity>
+
+                        <TextInput style={styles.input} placeholder="Tên công việc..." placeholderTextColor="#ccc" value={content} onChangeText={setContent} />
+
+                        {error !== "" && <Text style={{ fontFamily: "MuseoModerno" }}>{error}</Text>}
+
+                        <TouchableOpacity onPress={createHandle}>
+                          <View style={{ height: 50, width: "90%", backgroundColor: "#eee", borderRadius: 10, paddingTop: 7, paddingHorizontal: 10, marginTop: 10 }}>
+                            <Text style={{ fontFamily: "MuseoModerno", fontSize: 20, textAlign: "center" }}>Thêm</Text>
+                          </View>
+                        </TouchableOpacity>
+
+                        <DateTimePickerModal
+                          date={time}
+                          isVisible={datePickerShow}
+                          mode="datetime"
+                          is24Hour
+                          display="inline"
+                          locale="vi"
+                          onConfirm={(d) => { setTime(d); setDatePickerShow(false); }}
+                          onCancel={() => { setDatePickerShow(false); }}
+                        />
+                      </View>
+                    </SafeAreaView>
                   </Animated.View>
                 </Pressable>
-              </Modal>
-
-
-
-              <Modal visible={showAdd} transparent animationType="none">
-                <Pressable
-                  style={{
-                    flex: 1,
-                    backgroundColor: "rgba(0,0,0,0.4)",
-                    justifyContent: "center",
-                    alignItems: "center",
-                  }}
-                  onPress={() => {
-                    setShowadd(false);
-                    setError('');
-                    setContent("");
-
-                  }}
-                >
-                  <Pressable>
-                    <Animated.View
-                      style={{
-                        width: 300,
-                        minHeight: 350,
-                        backgroundColor: "white",
-                        borderRadius: 12,
-                        transform: [
-                          { translateX },
-                          { translateY },
-                          { scale: scaleAnim },
-                        ],
-                      }}
-                    > 
-                      <SafeAreaView style={{flex: 1}}>
-                        <View style={{padding: 20, flex: 1, display: 'flex', justifyContent: "center", alignItems: "center", width: '100%', height: '100%'}}>
-                          <TouchableOpacity
-                          style={{width: '100%'}}
-                           onPress={() => {setDatePickerShow(true);}} 
-                           >
-                            <View style={styles.selectTimeView}>
-                              <Calendar size={32}></Calendar>
-                              <View style={{backgroundColor: "#fff", borderRadius: 10, padding: 5, marginLeft: 20, marginRight: 5 }}>
-                                <Text style={{fontFamily: "MuseoModerno", fontSize: 16}}>
-                                  {time ? time.toLocaleDateString() : 'No date selected'}
-                                </Text>
-                              </View>
-
-                              <View style={{backgroundColor: "#fff", borderRadius: 10, padding: 5, }}>
-                                <Text style={{fontFamily: "MuseoModerno", fontSize: 16, }}>
-                                  {time ? time.toLocaleTimeString('vi-VN', {hour: '2-digit', minute: "2-digit", hour12: false, timeZone: 'Asia/Ho_Chi_Minh'}) : 'No date selected'}
-                                </Text>
-                              </View>
-                              
-                            </View>
-                          </TouchableOpacity>
-
-
-
-                          <TextInput
-                            style={styles.input}
-                            placeholder="Tên công việc..."
-                            placeholderTextColor="#ccc"
-                            value={content}
-                            onChangeText={setContent}
-                          ></TextInput>
-
-                          {!(error === "") &&  <Text style={{fontFamily: "MuseoModerno"}}>{error}</Text>}
-
-                          <TouchableOpacity
-                          onPress={() => {createHandle()}}
-                          >
-                            <View style={{height: 50, width: '90%', backgroundColor: "#eee", borderRadius: 10, paddingTop: 7, paddingHorizontal: 10, marginTop: 10}}>
-                              <Text style={{fontFamily: "MuseoModerno", fontSize: 20, textAlign: "center"}}>Thêm</Text>
-                            </View>
-                            
-                          </TouchableOpacity>
-
-                          
-                            
-
-
-
-
-
-
-                            <DateTimePickerModal
-                              date={time}
-                              isVisible={datePickerShow}
-                              mode="datetime"         
-                              is24Hour={true}       
-                              display="inline"
-                              locale='vi'
-                              onConfirm={(date) => { setTime(date); setDatePickerShow(false); }}
-                              onCancel={() => { setDatePickerShow(false); }}
-                            />
-                        </View>
-                      </SafeAreaView>
-                    </Animated.View>
-                  </Pressable>
-
-                </Pressable>
-              </Modal>
-            </View>
+              </Pressable>
+            </Modal>
+          </View>
         </View>
       </TouchableWithoutFeedback>
     </ScrollView>
-    )
+  );
 }
 
+/* -------------------------
+   Styles
+   ------------------------- */
 const styles = StyleSheet.create({
   container: {
     width: "100%",
     padding: width * 0.035,
-    marginTop: 31
+    marginTop: 31,
   },
   card: {
     width: "100%",
@@ -549,35 +537,33 @@ const styles = StyleSheet.create({
     height: 50,
     alignSelf: "center",
     width: "85%",
-    marginTop: 5
+    marginTop: 5,
   },
   arrowButton: {
     width: "20%",
     alignItems: "center",
     justifyContent: "center",
   },
-  arrow: { 
-    fontSize: 28, 
-    fontFamily: "MuseoModerno",  
-    },
+  arrow: {
+    fontSize: 28,
+    fontFamily: "MuseoModerno",
+  },
   monthTextWrapper: {
     paddingHorizontal: 8,
     width: "60%",
-    
   },
   monthText: {
-    fontFamily: "MuseoModerno", 
+    fontFamily: "MuseoModerno",
     fontSize: 18,
-    textAlign: "center"
+    textAlign: "center",
   },
   dropdown: {
     zIndex: 100,
-    flexDirection: 'row',
-    flexWrap: 'wrap', 
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "space-between",
     position: "absolute",
-    top: '110%',
-    left: '3%',
+    top: "50%",
     width: 270,
     backgroundColor: "#ddd",
     borderRadius: 8,
@@ -586,10 +572,10 @@ const styles = StyleSheet.create({
   },
   dropdownItem: {
     height: 50,
-    width: '25%',
+    width: "25%",
     alignItems: "center",
     paddingVertical: 10,
-    borderRadius: 10
+    borderRadius: 10,
   },
   selectedMonth: {
     backgroundColor: "#9ca3af",
@@ -601,7 +587,7 @@ const styles = StyleSheet.create({
     height: height * 0.55,
     minWidth: width * 0.83,
     borderWidth: 1,
-    borderRadius: 20,    
+    borderRadius: 20,
     overflow: "hidden",
     zIndex: 0,
   },
@@ -610,12 +596,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingTop: 12,
     height: "100%",
-    paddingHorizontal: 5
+    paddingHorizontal: 5,
   },
-  dayText: { 
-    fontFamily: "MuseoModerno",  
-    fontSize: 18, 
-    fontWeight: "500" 
+  dayText: {
+    fontFamily: "MuseoModerno",
+    fontSize: 18,
+    fontWeight: "500",
   },
   verticalBorder: {
     borderLeftWidth: 1,
@@ -623,42 +609,46 @@ const styles = StyleSheet.create({
   },
   mainborder: {
     borderWidth: 1,
-    height: `${100 -20}%`,
+    height: "80%",
     borderColor: "gray",
     borderRadius: 20,
     position: "absolute",
     bottom: "4.3%",
     width: "100%",
-    zIndex: -1
+    zIndex: -1,
   },
   hourcell: {
-    height: `${(93 / 4)}%`,
+    height: `${93 / 4}%`,
     paddingVertical: 20,
     borderTopWidth: 1,
     borderColor: "gray",
   },
   mainCell: {
-    height: `${(86 / 4)}%`,
+    height: `${86 / 4}%`,
     paddingVertical: 10,
     borderTopWidth: 1,
     borderColor: "gray",
     minWidth: 20,
-    flexDirection: 'column', flexWrap: 'wrap'
+    flexDirection: "column",
+    flexWrap: "wrap",
   },
   scheCell: {
     padding: 5,
-    borderRadius: 5, 
+    borderRadius: 5,
     marginHorizontal: 2,
-    marginBottom: 4
+    marginBottom: 4,
   },
   overlay: {
     position: "absolute",
-    top: 0, left: 0, right: 0, bottom: 0,
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
     backgroundColor: "rgba(0,0,0,0.1)",
-    zIndex: 100
+    zIndex: 100,
   },
   selectTimeView: {
-    width: '90%',
+    width: "90%",
     backgroundColor: "#ddd",
     borderRadius: 16,
     paddingVertical: 10,
@@ -666,21 +656,19 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     alignSelf: "center",
-
   },
   input: {
     width: "90%",
     borderWidth: 1,
     borderRadius: 16,
-    fontFamily: "MuseoModerno", 
+    fontFamily: "MuseoModerno",
     fontSize: 16,
-    paddingHorizontal: 30,
+    paddingHorizontal: 20,
     paddingVertical: 10,
     marginVertical: 10,
-    textAlign: 'center',
+    textAlign: "center",
   },
   calendarIcon: {
     width: 50,
-
   },
-})
+});

@@ -33,10 +33,10 @@ export default function HomePicture({userData}: {userData: any}) {
       <View style={styles.card}>
         {/* Header */}
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.push("/(tabs)/picture/page")}>
+          <TouchableOpacity onPress={() => router.push("/(tabs)/itemsaved/page")}>
             <Text style={styles.title}>Hình ảnh</Text>
           </TouchableOpacity>
-          <TouchableOpacity onPress={() => router.push("/(tabs)/picture/page")}>
+          <TouchableOpacity onPress={() => router.push("/(tabs)/itemsaved/page")}>
             <Text style={styles.allText}>Tất cả</Text>
           </TouchableOpacity>
         </View>

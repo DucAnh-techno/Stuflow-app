@@ -43,8 +43,11 @@ export default function PicturePage() {
   const [ subjectName, setSubjectName ] = useState("");
   const [ showAddSub, setShowAddSub ] = useState(false);
   const [isLongPressed, setIsLongPress] = useState(false);
+
   const [selected, setSelected] = useState<number | undefined>(undefined);
   const [insertPic, setInsertPic] = useState(false);
+  const [dataRmv, setDataRmv] = useState<{uri: string, subName: string} | null>(null);
+  const [pressPosition, setPressPosition] = useState<{ x: number; y: number } | null>(null);
 
   const [ focus, setFocus ] = useState(false);
   const [ themMon, setThemMon ] = useState(false);
@@ -211,8 +214,10 @@ export default function PicturePage() {
     setError("");
   };
 
-  async function removeF( uri: string, subject: string) {
-    const res: any = await removePicture(uri, subject, user);
+  async function removeF( data: {uri: string, subName: string}) {
+    if (!data) {console.log('khong co du lieu picture xoa')}
+    const {uri, subName} = data;
+    const res: any = await removePicture(uri, subName, user);
     setPictures(res);
     setIsLongPress(false);
     setSelected(undefined);
@@ -234,18 +239,60 @@ export default function PicturePage() {
     )
   };
 
+  const handleLongPress = (event: any) => {
+    const { pageX, pageY } = event;
+    setPressPosition({ x: pageX, y: pageY });  // lưu vị trí nhấn trên màn hình
+  };
+
   return (
     <>
       <ScrollView showsVerticalScrollIndicator={false}>
-        <TouchableWithoutFeedback onPress={() => { setIsLongPress(false); setSelected(undefined); setInsertPic(false)}}>
+        <TouchableWithoutFeedback >
           <View style={styles.container}>
             {(isLongPressed || insertPic) && (
               <Portal>
-                <TouchableWithoutFeedback onPress={() => { setIsLongPress(false); setSelected(undefined); }}>
+                <TouchableWithoutFeedback onPress={() => { setIsLongPress(false); setSelected(undefined); setDataRmv(null); setInsertPic(false); }}>
                   <View style={{width: '100%', height: '100%', position: "absolute", top: 0, left: 0, right: 0, bottom: 0, }}>
                     <View style={styles.overlay}></View>
                   </View>
                 </TouchableWithoutFeedback>
+
+
+                { dataRmv && <Animated.View 
+                  style={[
+                    styles.menu,
+                    { transform: [{ scale }], zIndex: 999 },
+                    pressPosition && { top: pressPosition.y - 100, left: pressPosition.x - 25 }
+                  ]}
+                >         
+                  <TouchableOpacity onPress={() => removeF(dataRmv!)}>
+                    <BlurView intensity={100} tint="light" style={styles.blurRm}>
+                      <Text style={styles.remove}>Xóa</Text>
+                    </BlurView>
+                  </TouchableOpacity>
+                </Animated.View>}
+
+                { insertPic && <Animated.View 
+                pointerEvents={insertPic ? "auto" : "none"}
+                style={[
+                    styles.insertMenu,
+                    { transform: [{ scale: insertScale  }], opacity: insertOpacity },
+                    insertPic && {zIndex: 999},
+                    pressPosition && { top: pressPosition.y - 150, left: pressPosition.x  }
+                ]}
+                >         
+                    <TouchableOpacity onPress={pickCamera}>
+                        <BlurView intensity={100} tint="light" style={styles.blurInsert}>
+                            <Text style={[styles.insertPic]}>Mở camera</Text>
+                        </BlurView>
+                    </TouchableOpacity>
+                    <TouchableOpacity onPress={pickPicture}>
+                        <BlurView intensity={100} tint="light" style={styles.blurInsert}>
+                            <Text style={[styles.insertPic]}>Chọn từ thư viện</Text>
+                        </BlurView>
+                    </TouchableOpacity>
+                </Animated.View>}
+
               </Portal>
             )}
             <View style={styles.card}>
@@ -267,25 +314,19 @@ export default function PicturePage() {
                     <View style={{flexDirection: "row", flexWrap: "wrap",}}>
                       {picture.pictures.map((item, i) => (
                       <View key={i} style={{ alignItems: "center" }}>
-                        <TouchableOpacity style={{zIndex: 102}} onPress={() => {setUri(picture.pictures); setShowImage(true); setStartIndex(i); }} onLongPress={() => {setSelected(index * 1000 + i); setIsLongPress(true)}}>
+                        <TouchableOpacity style={{zIndex: 102}} 
+                        onPress={() => {setUri(picture.pictures); setShowImage(true); setStartIndex(i); }} 
+                        onLongPress={(e) => {
+                          setSelected(index * 1000 + i); 
+                          setIsLongPress(true);
+                          handleLongPress(e.nativeEvent);
+                          setDataRmv({uri: item.uri, subName: picture.subName});
+                          }}
+                          >
                           <View style={[styles.doc, selected === (index * 1000 + i) && styles.selectedFile]}>
                             <Image source={{uri: item.uri }} style={styles.avatar} />
                           </View>
                         </TouchableOpacity>
-
-                          <Animated.View key={`${index}${i}`}
-                            style={[
-                              styles.menu,
-                              { transform: [{ scale }] },
-                              isLongPressed && selected === (index * 1000 + i) && styles.index
-                            ]}
-                          >         
-                            <TouchableOpacity onPress={() => removeF(item.uri, picture.subName)}>
-                              <BlurView intensity={100} tint="light" style={styles.blurRm}>
-                                <Text style={styles.remove}>Xóa</Text>
-                              </BlurView>
-                            </TouchableOpacity>
-                          </Animated.View>
                       </View>
                       ))}
                   </View>
@@ -293,7 +334,7 @@ export default function PicturePage() {
                 ))}
 
                 <View style={{ alignItems: "center" }}>
-                  <TouchableOpacity onPress={() => setInsertPic(true)}>
+                  <TouchableOpacity onPress={(e) => {setInsertPic(true); handleLongPress(e.nativeEvent);}}>
                     <View style={styles.insert}>
                       <View style={styles.insert2}>
                         <View style={[styles.line, { transform: [{translateY: -15}]}]}></View>
@@ -302,25 +343,6 @@ export default function PicturePage() {
                     </View>
                   </TouchableOpacity>
                   <Text style={{fontFamily: "MuseoModerno"}}>Insert</Text>
-                    <Animated.View 
-                    pointerEvents={insertPic ? "auto" : "none"}
-                    style={[
-                        styles.insertMenu,
-                        { transform: [{ scale: insertScale  }], opacity: insertOpacity },
-                        insertPic && {zIndex: 102}
-                    ]}
-                    >         
-                        <TouchableOpacity onPress={pickCamera}>
-                            <BlurView intensity={100} tint="light" style={styles.blurInsert}>
-                                <Text style={[styles.insertPic]}>Mở camera</Text>
-                            </BlurView>
-                        </TouchableOpacity>
-                        <TouchableOpacity onPress={pickPicture}>
-                            <BlurView intensity={100} tint="light" style={styles.blurInsert}>
-                                <Text style={[styles.insertPic]}>Chọn từ thư viện</Text>
-                            </BlurView>
-                        </TouchableOpacity>
-                    </Animated.View>
                 </View>
               </View>
             </View>
@@ -440,7 +462,7 @@ const styles = StyleSheet.create({
     backgroundColor: "white",
     borderBottomLeftRadius: 16,
     borderBottomRightRadius: 16,
-    minHeight: height * 0.73
+    minHeight: height * 0.68
   },
   subText: {
     fontFamily: "MuseoModerno",
@@ -602,10 +624,7 @@ const styles = StyleSheet.create({
   },
   insertMenu: {
     position: "absolute",
-    top: -60,
-    right: -110,
     backgroundColor: "rgba(255,255,255,0.8)",
-    zIndex: -1,
     paddingHorizontal: 7,
     paddingVertical: 10,
     borderRadius: 10,
@@ -645,9 +664,7 @@ const styles = StyleSheet.create({
   },
   menu: {
     position: "absolute",
-    top: -40,
-    right: 31,
-    backgroundColor: "rgba(255,255,255,0.7)",
+    backgroundColor: "rgba(255,255,255,1)",
     borderRadius: 100,
     shadowColor: "#000",
     shadowOpacity: 0.2,
@@ -655,10 +672,6 @@ const styles = StyleSheet.create({
     shadowRadius: 5,
     elevation: 5,
     zIndex: -1,
-  },
-
-  index: {
-    zIndex: 102,
   },
   avatar: { 
     width: "100%", 

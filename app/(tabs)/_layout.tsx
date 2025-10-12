@@ -288,7 +288,7 @@ export default function TabsLayout() {
               <View style={[styles.textSkeleton, { height: 15, marginTop: 5 }]} />
             </View>
           ) : (
-            <View>
+            <View >
               <Text style={styles.name}>{userData?.name ?? "Họ tên..."}</Text>
               <Text style={styles.mssv}>Mssv: {userData?.username ?? "Mssv..."}</Text>
             </View>
@@ -357,23 +357,26 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "flex-end",
     marginLeft: 15,
-    marginBottom: 15,
+    marginBottom: 12,
     width: 100,
     shadowColor: "#000",
-    shadowOpacity: 0.4,
+    shadowOpacity: 0.3,
     shadowRadius: 4,
     shadowOffset: { height: 2, width: 0 },
   },
   name: {
     fontWeight: "600",
-    fontSize: 18,
+    fontSize: 17,
     fontFamily: "MuseoModerno",
     marginBottom: -3,
+    width: 180,
+    lineHeight: 23
   },
   mssv: {
     fontFamily: "MuseoModerno",
     fontSize: 11,
     color: "gray",
+    width: 180,
   },
   textSkeleton: {
     borderRadius: 6,

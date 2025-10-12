@@ -66,9 +66,9 @@ export default function HomeCalendar({userData}: {userData: any}) {
     );
   }
 
-  const courses = data.courses as Courses[];
-  const lichTuan = data.lichTuan as LichTuanItem[];
-  const lichThang = data.lichThang as DayItem[];
+  const courses = data.courses ? data.courses as Courses[] : [] ;
+  const lichTuan = data.lichTuan ? data.lichTuan as LichTuanItem[] : [];
+  const lichThang = data.lichThang ? data.lichThang as DayItem[] : [];
 
   const handleOpen = ( nativeEvent: { pageX: number; pageY: number }) => {
     const { pageX, pageY } = nativeEvent;
@@ -162,7 +162,7 @@ export default function HomeCalendar({userData}: {userData: any}) {
                       styles.dropdown,
                       { transform: [{ scale: scaleAnim }, {translateX}, {translateY}] },
                       ]}>
-                      {months.map((m, idx) => (
+                      {months?.map((m, idx) => (
                       <TouchableOpacity
                           key={idx}
                           style={[styles.dropdownItem, idx === month && styles.selectedMonth]}
@@ -180,7 +180,7 @@ export default function HomeCalendar({userData}: {userData: any}) {
 
             {/* Day Names */}
             <View style={styles.weekHeader}>
-              {dateNames.map((d, i) => (
+              {dateNames?.map((d, i) => (
                 <View
                   key={i}
                   style={[
@@ -194,7 +194,7 @@ export default function HomeCalendar({userData}: {userData: any}) {
             </View>
 
             {/* Calendar Weeks */}
-            {weeks.map((week, wIndex) => (
+            {Array.isArray(weeks) && weeks?.map((week, wIndex) => (
               <View key={wIndex} style={styles.weekRow}>
                 {week.map((day, dIndex) => (
                   <Pressable 
@@ -220,11 +220,11 @@ export default function HomeCalendar({userData}: {userData: any}) {
                       <Text style={{fontFamily: "MuseoModerno",}}>{day || ""}</Text>
 
                       {/* Chấm Blue cho tiết học */}
-                      {lichThang.map((item, hIndex) => (
+                      {Array.isArray(lichThang) && lichThang?.map((item, hIndex) => (
                         <View key={hIndex}>
                           {parseInt(item.date.substring(0, 2), 10) === day && parseInt(item.date.substring(3, 5), 10) === (month + 1) ?
                             <View style={{ flexDirection: "row", }}>
-                              {item.subjects.map((sub, i) => (
+                              {item?.subjects.map((sub, i) => (
                                 <Text key={i} style={[styles.dot, { color: "black" }]}>&bull;</Text>
                               ))}
                             </View>
@@ -235,7 +235,7 @@ export default function HomeCalendar({userData}: {userData: any}) {
                       
                       {/* Chấm Green cho Course bắt đầu */}
                       <View style={{flexDirection: 'row'}}>
-                        {courses.map((item, cIndex) => (
+                        {Array.isArray(courses) && courses?.map((item, cIndex) => (
                           <View key={cIndex} style={{ flexDirection: "row", }}>
                             {!eventKey.includes(item.eventtype) && parseInt(item.daystart.substring(0, 2), 10) === day && parseInt(item.daystart.substring(3, 5), 10) === (month + 1) ?
                               <Text style={[styles.dot, { color: "rgb(83, 255, 26)" }]}>&bull;</Text>
@@ -247,7 +247,7 @@ export default function HomeCalendar({userData}: {userData: any}) {
 
                       {/* Chấm Red cho Course kết thúc */}
                       <View style={{flexDirection: 'row'}}>
-                        {courses.map((item, cIndex) => (
+                        {Array.isArray(courses) && courses?.map((item, cIndex) => (
                           <View key={cIndex} style={{ flexDirection: "row", }}>
                             {eventKey.includes(item.eventtype) && parseInt(item.daystart.substring(0, 2), 10) === day && parseInt(item.daystart.substring(3, 5), 10) === (month + 1) ?
                               <Text style={[styles.dot, { color: "red" }]}>&bull;</Text>

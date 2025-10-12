@@ -42,7 +42,7 @@ export default function HomeDocument({userData}: {userData: any}) {
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.scrollContainer}
         >
-                {files?.map((file, index) => (
+                {Array.isArray(files) && files?.map((file, index) => (
                   <View key={index} style={{minWidth: "95%", paddingLeft: 5}}>
                     <View style={{flexDirection: "row"}}>
                       {file.files.map((item, i) => (

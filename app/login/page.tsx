@@ -110,7 +110,6 @@ export default function LoginScreen() {
       } else {
         // Username not found -> show recaptcha fallback
         console.warn("Username not found:", trimmedUsername);
-        setErrorMessage("Username không tồn tại. Thử xác thực ReCaptcha để đăng nhập hoặc kiểm tra lại username.");
         setShowRecaptcha(true);
         setLoading(false);
         return;

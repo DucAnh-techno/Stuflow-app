@@ -1,16 +1,18 @@
 import { fileSubSave } from "@/types";
+import * as FileSystem from 'expo-file-system';
 import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
   Dimensions,
-  Linking,
+  Image,
   ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
-  View,
-  Image
+  View
 } from "react-native";
+import FileViewer from 'react-native-file-viewer';
+import { restoreFile } from "./functions/restoreFile";
 
 const { height, width } = Dimensions.get("window");
 
@@ -21,7 +23,26 @@ export default function HomeDocument({userData}: {userData: any}) {
   useEffect(() => {
     if (!userData) {return}
     setFiles(userData.itemSaved);
-  }, [userData])
+  }, [userData]);
+
+  useEffect(() => {
+    const retore = async() => {
+      for (const sub of files){
+        for (const item of sub.files) {
+          const fileInfo = new FileSystem.File(item.uri);
+          const info = fileInfo.info();
+
+          if(!info.exists) {
+            const restore: fileSubSave[] | [] = await restoreFile(item.uri, item.name, sub.subName, userData.username);
+            setFiles(restore);
+          }
+        }
+      }
+    };
+
+    retore();
+    console.log('restore');
+  }, [files, userData])
 
   return (
     <View style={styles.container}>
@@ -50,7 +71,7 @@ export default function HomeDocument({userData}: {userData: any}) {
                   
                     {file.files.map((item, i) => (
                     <View key={i} style={{ alignItems: "center" }}>
-                      <TouchableOpacity style={{zIndex: 102}} onPress={() => Linking.openURL(item.uri)}>
+                      <TouchableOpacity style={{zIndex: 102}} onPress={() => FileViewer.open(item.uri)}>
                         <View style={[styles.doc, ]}>
                           <Image source={{uri: item.uri  }} style={styles.avatar}></Image>
                         </View>

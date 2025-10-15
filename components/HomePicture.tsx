@@ -11,22 +11,43 @@ import {
   View
 } from "react-native";
 import ImageViewing from "react-native-image-viewing";
+import { restorePicture } from "./functions/restoreImg";
+import * as FileSystem from 'expo-file-system';
 
 const { height, width } = Dimensions.get("window");
 
 export default function HomePicture({userData}: {userData: any}) {
   const router = useRouter();
-  const [files, setFiles] = useState<fileSubSave[] | []>([]);
+  const [pictures, setPictures] = useState<fileSubSave[] | []>([]);
   const [uri, setUri] = useState<Pictures[]>([]);
   const [startIndex, setStartIndex] = useState<number>(0);
   const [showImage, setShowImage] = useState(false);
 
   useEffect(() => {
     if (!userData) {return}
-    setFiles(userData.itemSaved);
-  }, [userData])
+    setPictures(userData.itemSaved);
+  }, [userData]);
 
-  const allFile: Pictures[] = files.flatMap(sub => sub.pictures.map(pic => ({uri:pic.uri})));
+  useEffect(() => {
+    const retore = async() => {
+      for (const sub of pictures){
+        for (const item of sub.pictures) {
+          const fileInfo = new FileSystem.File(item.uri);
+          const info = fileInfo.info();
+
+          if(!info.exists) {
+            const restore: fileSubSave[] | [] = await restorePicture(item.uri, sub.subName, userData.username);
+            setPictures(restore);
+          }
+        }
+      }
+    };
+
+    retore();
+    console.log('restore');
+  }, [pictures, userData]);
+
+  const allFile: Pictures[] = pictures.flatMap(sub => sub.pictures.map(pic => ({uri:pic.uri})));
 
   return (
     <View style={styles.container}>

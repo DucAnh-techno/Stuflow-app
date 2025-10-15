@@ -28,6 +28,8 @@ import {
 import ImageViewing from "react-native-image-viewing";
 import { Portal } from 'react-native-paper';
 import { db } from "src/firebase/firebase";
+import { restorePicture } from "../functions/restoreImg";
+import * as FileSystem from 'expo-file-system';
 
 const { height, width } = Dimensions.get("window");
 
@@ -72,6 +74,25 @@ export default function PicturePage() {
 
     updateFiles();
   }, [user, reload]);
+
+  useEffect(() => {
+    const retore = async() => {
+      for (const sub of pictures){
+        for (const item of sub.pictures) {
+          const fileInfo = new FileSystem.File(item.uri);
+          const info = fileInfo.info();
+
+          if(!info.exists) {
+            const restore: fileSubSave[] | [] = await restorePicture(item.uri, sub.subName, user);
+            setPictures(restore);
+          }
+        }
+      }
+    };
+
+    retore();
+    console.log('restore');
+  }, [pictures, user]);
 
     const scale = useRef(new Animated.Value(0.6)).current;
     const opacity = useRef(new Animated.Value(0)).current;
@@ -476,11 +497,11 @@ const styles = StyleSheet.create({
     flexWrap: "wrap",
   },
   doc: {
-    height: 100,
-    width: 100,
+    aspectRatio: 1,
+    width: '30%',
     borderRadius: 8,
     backgroundColor: "rgb(240, 240, 240, 0.3)",
-    margin: 10,
+    margin: `${10 / 6}%`,
     borderColor: "#aaa",
     borderWidth: 1,
     alignItems: "center",

@@ -8,6 +8,7 @@ import { fileSubSave } from "@/types";
 import { Picker } from "@react-native-picker/picker";
 import { BlurView } from "expo-blur";
 import * as DocumentPicker from "expo-document-picker";
+import * as FileSystem from 'expo-file-system';
 import { doc, getDoc } from "firebase/firestore";
 import React, { useEffect, useRef, useState } from "react";
 import {
@@ -25,9 +26,10 @@ import {
   TouchableWithoutFeedback,
   View
 } from "react-native";
+import FileViewer from 'react-native-file-viewer';
 import { Portal } from 'react-native-paper';
 import { db } from "src/firebase/firebase";
-import FileViewer from 'react-native-file-viewer';
+import { restoreFile } from "../functions/restoreFile";
 
 const { height, width } = Dimensions.get("window");
 
@@ -71,6 +73,25 @@ export default function DocumentPage() {
 
     updateFiles();
   }, [user, reload]);
+
+  useEffect(() => {
+    const retore = async() => {
+      for (const sub of files){
+        for (const item of sub.files) {
+          const fileInfo = new FileSystem.File(item.uri);
+          const info = fileInfo.info();
+
+          if(!info.exists) {
+            const restore: fileSubSave[] | [] = await restoreFile(item.uri, item.name, sub.subName, user);
+            setFiles(restore);
+          }
+        }
+      }
+    };
+
+    retore();
+    console.log('restore');
+  }, [files, user])
 
   const scale = useRef(new Animated.Value(0.6)).current;
   const opacity = useRef(new Animated.Value(0)).current;
@@ -226,8 +247,11 @@ export default function DocumentPage() {
                       <Text style={[styles.remove, {fontWeight: "300", fontSize: 14, textAlign: "right", marginRight: 20}]}>Xóa môn</Text>
                     </TouchableOpacity>
                     <View style={{flexDirection: "row", flexWrap: "wrap",}}>
-                      {file.files.map((item, i) => (
-                      <View key={i} style={{ alignItems: "center" }}>
+                      {file.files.map(async(item, i) => {
+
+
+                        return(
+                      <View key={i} style={{ alignItems: "center", }}>
                         <TouchableOpacity style={{zIndex: 102}} onPress={() => {FileViewer.open(item.uri)}} 
                         onLongPress={(e) => {
                           setSelected(index * 1000 + i); 
@@ -246,7 +270,7 @@ export default function DocumentPage() {
                         <Text style={{fontFamily: "MuseoModerno", width: 80, height: 25, textAlign: "center", overflow: "hidden"}}>{item.name}.pdf</Text>
                         
                       </View>
-                      ))}
+                      )})}
                   </View>
                 </View>
                 ))}
@@ -392,11 +416,11 @@ const styles = StyleSheet.create({
     paddingTop: 0
   },
   doc: {
-    height: 100,
-    width: 100,
+    aspectRatio: 1,
+    width: '30%',
     borderRadius: 8,
     backgroundColor: "rgb(240, 240, 240, 0.3)",
-    margin: 10,
+    margin: `${10 / 6}%`,
     borderColor: "#aaa",
     borderWidth: 1,
     alignItems: "center",

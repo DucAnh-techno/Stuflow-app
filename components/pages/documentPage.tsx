@@ -16,7 +16,6 @@ import {
   Dimensions,
   Image,
   Keyboard,
-  Linking,
   Modal,
   ScrollView,
   StyleSheet,
@@ -28,6 +27,7 @@ import {
 } from "react-native";
 import { Portal } from 'react-native-paper';
 import { db } from "src/firebase/firebase";
+import FileViewer from 'react-native-file-viewer';
 
 const { height, width } = Dimensions.get("window");
 
@@ -228,7 +228,7 @@ export default function DocumentPage() {
                     <View style={{flexDirection: "row", flexWrap: "wrap",}}>
                       {file.files.map((item, i) => (
                       <View key={i} style={{ alignItems: "center" }}>
-                        <TouchableOpacity style={{zIndex: 102}} onPress={() => Linking.openURL(item.uri)} 
+                        <TouchableOpacity style={{zIndex: 102}} onPress={() => {FileViewer.open(item.uri)}} 
                         onLongPress={(e) => {
                           setSelected(index * 1000 + i); 
                           setIsLongPress(true);

@@ -72,7 +72,7 @@ const styles = StyleSheet.create({
   container: {
     width: "100%",
     padding: 16,
-    marginTop: 8
+    marginTop: 15
   },
   card: {
     width: "100%",

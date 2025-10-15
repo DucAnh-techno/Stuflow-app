@@ -4,6 +4,7 @@ import {
   ActivityIndicator,
   Alert,
   Button,
+  Dimensions,
   Image,
   StyleSheet,
   Text,
@@ -25,6 +26,7 @@ import { updateData } from "@/src/service/updateData";
 import { db } from "src/firebase/firebase";
 import Sidenav from "../../components/Sidenav";
 import ReCaptchaV3, { ReCaptchaV3Ref } from "../../src/service/reCaptcha";
+import { moderateScale } from "react-native-size-matters";
 
 /**
  * Layout / Tabs screen
@@ -47,6 +49,7 @@ import ReCaptchaV3, { ReCaptchaV3Ref } from "../../src/service/reCaptcha";
  */
 
 const RECAPTCHA_URI = "https://ducanh-techno.github.io/reCaptchav3";
+const { height, width } = Dimensions.get("window");
 
 export default function TabsLayout() {
   // Auth
@@ -295,7 +298,7 @@ export default function TabsLayout() {
           )}
         </View>
 
-        <TouchableOpacity onPress={handleUpdatePress} style={{ position: "absolute", right: 10 }}>
+        <TouchableOpacity onPress={handleUpdatePress} style={{ position: "absolute", right: '8%', top: '35%' }}>
           {uploading ? <ActivityIndicator style={styles.spin} /> : <Text style={styles.update}>Stuflow</Text>}
         </TouchableOpacity>
 
@@ -317,7 +320,7 @@ export default function TabsLayout() {
 const styles = StyleSheet.create({
   container: {
     zIndex: 999,
-    height: 100,
+    height: moderateScale(100),
     width: "100%",
     backgroundColor: "white",
     flexDirection: "row",
@@ -330,13 +333,13 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 3 },
     shadowRadius: 3,
     elevation: 4,
-    transform: [{ translateY: 32 }],
+    transform: [{ translateY: height * 0.04 }],
     borderTopRightRadius: 20,
     borderTopLeftRadius: 20,
   },
   avatarWrapper: {
-    width: 70,
-    height: 70,
+    width: moderateScale(65),
+    height: moderateScale(65),
     borderRadius: 20,
     overflow: "hidden",
     marginLeft: 20,
@@ -366,7 +369,7 @@ const styles = StyleSheet.create({
   },
   name: {
     fontWeight: "600",
-    fontSize: 17,
+    fontSize: moderateScale(16),
     fontFamily: "MuseoModerno",
     marginBottom: -3,
     width: 180,
@@ -374,7 +377,7 @@ const styles = StyleSheet.create({
   },
   mssv: {
     fontFamily: "MuseoModerno",
-    fontSize: 11,
+    fontSize: moderateScale(10),
     color: "gray",
     width: 180,
   },
@@ -386,10 +389,8 @@ const styles = StyleSheet.create({
   },
   update: {
     fontWeight: "600",
-    fontSize: 22,
+    fontSize: moderateScale(22),
     fontFamily: "Pacifico",
-    marginBottom: 25,
-    marginRight: 50,
     color: "#ccc",
     textShadowColor: "#eee",
     textShadowOffset: { width: 0, height: 0 },
@@ -397,9 +398,9 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
   },
   spin: {
-    marginBottom: 30,
-    marginRight: 70,
     transform: [{ scale: 1.3 }],
+    width: moderateScale(80),
+    height: moderateScale(46),
   },
   centered: {
     flex: 1,

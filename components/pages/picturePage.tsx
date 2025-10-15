@@ -360,8 +360,6 @@ export default function PicturePage() {
           swipeToCloseEnabled={true}         // swipe up/down để đóng
           doubleTapToZoomEnabled={true}      // double tap zoom
         />
-
-      
  
 
           {/** Hiển thị input nhập ảnh */}

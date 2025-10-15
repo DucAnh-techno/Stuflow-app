@@ -18,6 +18,7 @@ import {
 } from "react-native";
 import { db } from "src/firebase/firebase";
 import SkeletonWeekCard from "../../../components/skeletons/wcalendarSkeleton";
+import { moderateScale } from "react-native-size-matters";
 
 /**
  * WeekCalendar (fixed)
@@ -345,6 +346,7 @@ const styles = StyleSheet.create({
     width: "100%",
     padding: width * 0.035,
     marginTop: 31,
+    marginBottom: 90,
   },
   card: {
     width: "100%",
@@ -352,7 +354,6 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     paddingVertical: 18,
     paddingHorizontal: width * 0.05,
-    minHeight: height * 0.73,
   },
   header: {
     flexDirection: "row",
@@ -362,8 +363,8 @@ const styles = StyleSheet.create({
     flexWrap: "wrap",
   },
   title: {
-    marginLeft: 25,
-    paddingBottom: 27,
+    marginLeft: moderateScale(25),
+    paddingBottom: (27),
     fontFamily: "MuseoModerno",
     fontSize: 22,
     textDecorationLine: "underline",
@@ -376,7 +377,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#ddd",
     borderRadius: 8,
     height: 55,
-    width: 110,
+    width: moderateScale(110),
     marginRight: 15,
   },
   monthTextWrapper: {
@@ -394,12 +395,12 @@ const styles = StyleSheet.create({
   },
   weekHeader: {
     flexDirection: "row",
-    marginTop: 14,
+    marginTop: moderateScale(16),
     width: pageWidth,
   },
   weekday: {
     width: "14.28%",
-    height: 70,
+    height: '100%',
     borderColor: "gray",
     borderBottomWidth: 0.5,
     borderBottomColor: "#eee",
@@ -408,15 +409,15 @@ const styles = StyleSheet.create({
   weekAct: {
     backgroundColor: "#eee",
     borderTopWidth: 1,
-    transform: [{ translateY: -10 }],
-    height: 80,
+    transform: [{ translateY: -15 }],
+    height: `140%`,
     marginBottom: -5,
   },
   dayCell: {
     flex: 1,
     alignItems: "center",
-    paddingTop: 8,
-    paddingBottom: 2,
+    paddingTop: 6,
+    paddingBottom: 6,
   },
   weekText: {
     fontFamily: "MuseoModerno",
@@ -432,12 +433,11 @@ const styles = StyleSheet.create({
   subcont: {
     flexDirection: "row",
     width: "100%",
-    minHeight: "71%",
+    minHeight: moderateScale(350),
     borderWidth: 1,
     borderColor: "gray",
     borderBottomLeftRadius: 10,
     borderBottomRightRadius: 10,
-    marginTop: -6,
     shadowColor: "#000",
     shadowOpacity: 0.1,
     shadowRadius: 6,

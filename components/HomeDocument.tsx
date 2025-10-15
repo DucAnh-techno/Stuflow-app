@@ -37,30 +37,35 @@ export default function HomeDocument({userData}: {userData: any}) {
         </View>
 
         {/* Scroll ngang grid 2 hàng */}
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.scrollContainer}
-        >
-                {Array.isArray(files) && files?.map((file, index) => (
-                  <View key={index} style={{minWidth: "95%", paddingLeft: 5}}>
-                    <View style={{flexDirection: "row"}}>
-                      {file.files.map((item, i) => (
-                      <View key={i} style={{ alignItems: "center" }}>
-                        <TouchableOpacity style={{zIndex: 102}} onPress={() => Linking.openURL(item.uri)}>
-                          <View style={[styles.doc, ]}>
-                            <Image source={{uri: item.uri  }} style={styles.avatar}></Image>
-                          </View>
-                        </TouchableOpacity>
-                        
-                        <Text style={{fontFamily: "MuseoModerno", width: 70, height: 25, textAlign: "center", overflow: "hidden"}}>{item.name}.pdf</Text>
-                        
-                      </View>
-                      ))}
-                  </View>
+        <View style={{ width: '90%', overflow: 'hidden', alignSelf: 'center'}}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.scrollContainer}
+          >
+            <View>
+              <View style={{flexDirection: "row"}}>
+              {Array.isArray(files) && files?.map((file, index) => (
+                <View key={index} style={{ flexDirection: "row"}}>
+                  
+                    {file.files.map((item, i) => (
+                    <View key={i} style={{ alignItems: "center" }}>
+                      <TouchableOpacity style={{zIndex: 102}} onPress={() => Linking.openURL(item.uri)}>
+                        <View style={[styles.doc, ]}>
+                          <Image source={{uri: item.uri  }} style={styles.avatar}></Image>
+                        </View>
+                      </TouchableOpacity>
+                      
+                      <Text style={{fontFamily: "MuseoModerno", width: 70, height: 25, textAlign: "center", overflow: "hidden"}}>{item.name}.pdf</Text>
+                      
+                    </View>
+                    ))}
                 </View>
-                ))}
-        </ScrollView>
+              ))}
+            </View>
+              </View>
+          </ScrollView>
+        </View>
       </View>
     </View>
   );
@@ -102,7 +107,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     flexWrap: "wrap",
     gap: 12,
-    paddingHorizontal: 12,
   },
   docBox: {
     width: 96, // ~6rem

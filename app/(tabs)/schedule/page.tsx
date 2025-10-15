@@ -25,6 +25,7 @@ import {
 } from "react-native";
 import DateTimePickerModal from "react-native-modal-datetime-picker";
 import { db } from "src/firebase/firebase";
+import { moderateScale } from "react-native-size-matters";
 
 /**
  * SchedulePage — cleaned & fixed
@@ -311,7 +312,7 @@ export default function SchedulePage() {
               </Pressable>
             </View>
 
-            <View style={{ width: "100%" }}>
+            <View style={{ width: "100%", marginBottom: 15 }}>
               <View style={styles.monthSelector}>
                 <TouchableOpacity onPress={prevWeek} style={styles.arrowButton}>
                   <Text style={styles.arrow}>&lt;</Text>
@@ -354,10 +355,10 @@ export default function SchedulePage() {
                 {/* Day Names & grid */}
                 <View style={styles.weekHeader}>
                   <View style={[styles.dayCell]}>
-                    <View style={{ height: "12%", paddingTop: 10 }}>
-                      <Text style={[styles.dayText, { textAlign: "center" }]}>Thời gian</Text>
+                    <View style={{ height: "15%" }}>
+                      <Text style={[styles.dayText, { textAlign: "center", marginTop: 20 }]}>Thời gian</Text>
                     </View>
-                    <View>
+                    <View style={{height: '85%'}}>
                       <View style={[styles.hourcell, { borderTopWidth: 0 }]}><Text>00:00-06:00</Text></View>
                       <View style={styles.hourcell}><Text>06:00-12:00</Text></View>
                       <View style={styles.hourcell}><Text>12:00-18:00</Text></View>
@@ -371,37 +372,39 @@ export default function SchedulePage() {
 
                     return (
                       <View key={s} style={[styles.dayCell, styles.verticalBorder]}>
-                        <TouchableOpacity style={{ paddingBottom: 13 }}>
+                        <View style={{ height: '15%', paddingTop: 15 }}>
                           <Text style={styles.dayText}>{d}</Text>
                           <Text>{weeks?.[s]?.slice(8, 10) ?? "--"}</Text>
-                        </TouchableOpacity>
+                        </View>
 
-                        {hourSlots.map((hour, index) => (
-                          <View key={index} style={[styles.mainCell, index === 0 && { borderTopWidth: 0 }]}>
-                            <View style={{ width: "100%", flexDirection: "column", flexWrap: "wrap" }}>
-                              {safeSchedule.map((item, i) => {
-                                const ddNum = Number(item.daystart?.slice(8, 10));
-                                const mmNum = Number(item.daystart?.slice(5, 7));
-                                // timestart like "13:30": parse hours then divide by 6 (original logic)
-                                const parsedHour = Number(item.timestart?.slice(0, 2));
-                                const timeBlock = !Number.isNaN(parsedHour) ? parsedHour / 6 : -1;
+                        <View style={{height: '85%'}}>
+                          {hourSlots.map((hour, index) => (
+                            <View key={index} style={[styles.mainCell, index === 0 && { borderTopWidth: 0 }]}>
+                              <View style={{ width: "100%", flexDirection: "column", flexWrap: "wrap" }}>
+                                {safeSchedule.map((item, i) => {
+                                  const ddNum = Number(item.daystart?.slice(8, 10));
+                                  const mmNum = Number(item.daystart?.slice(5, 7));
+                                  // timestart like "13:30": parse hours then divide by 6 (original logic)
+                                  const parsedHour = Number(item.timestart?.slice(0, 2));
+                                  const timeBlock = !Number.isNaN(parsedHour) ? parsedHour / 6 : -1;
 
-                                return (
-                                  <View key={i}>
-                                    {ddNum === currentDD && mmNum === currentMM && timeBlock >= (hour - 1) && timeBlock < hour && (
-                                      <Pressable
-                                        style={[styles.scheCell, { backgroundColor: item.color ?? "#ccc" }]}
-                                        onPress={(e) => { handlePress(e.nativeEvent); setScheSelected(item); setVisible(true); }}
-                                      >
-                                        <Text style={{ fontFamily: "MuseoModerno", fontSize: 16 }}>{item.timestart}</Text>
-                                      </Pressable>
-                                    )}
-                                  </View>
-                                );
-                              })}
+                                  return (
+                                    <View key={i}>
+                                      {ddNum === currentDD && mmNum === currentMM && timeBlock >= (hour - 1) && timeBlock < hour && (
+                                        <Pressable
+                                          style={[styles.scheCell, { backgroundColor: item.color ?? "#ccc" }]}
+                                          onPress={(e) => { handlePress(e.nativeEvent); setScheSelected(item); setVisible(true); }}
+                                        >
+                                          <Text style={{ fontFamily: "MuseoModerno", fontSize: 16 }}>{item.timestart}</Text>
+                                        </Pressable>
+                                      )}
+                                    </View>
+                                  );
+                                })}
+                              </View>
                             </View>
-                          </View>
-                        ))}
+                          ))}
+                        </View>
                       </View>
                     );
                   })}
@@ -411,17 +414,20 @@ export default function SchedulePage() {
               </Pressable>
             </ScrollView>
 
+            
+
             {/* Detail Modal */}
             <Modal visible={visible} transparent animationType="none">
               <Pressable style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.4)", justifyContent: "center", alignItems: "center" }} onPress={closePopup}>
                 <Animated.View
                   style={{
-                    width: 250,
+                    width: 300,
                     minHeight: 180,
                     backgroundColor: scheSelected?.color ?? "white",
                     borderRadius: 12,
-                    padding: 20,
+                    padding: 30,
                     zIndex: 5,
+                    paddingTop: 20,
                     transform: [{ translateX: translateX }, { translateY: translateY }, { scale: scaleAnim }],
                   }}
                 >
@@ -432,20 +438,24 @@ export default function SchedulePage() {
                   <Text style={{ fontSize: 16, fontWeight: "500", fontFamily: "MuseoModerno" }}>
                     Giờ: {scheSelected?.timestart ?? "--"}
                   </Text>
-                  <View style={{ width: '80%', height: 1, backgroundColor: 'grey', alignSelf: 'center', marginVertical: 10 }} />
+                  <View style={{ width: '100%', height: 1, backgroundColor: 'grey', alignSelf: 'center', marginVertical: 10 }} />
                   <View>
                     <Text style={{ fontSize: 16, fontWeight: "600", fontFamily: "MuseoModerno", width: 85 }}>Nội dung:</Text>
-                    <Text style={{ fontSize: 16, fontWeight: "500", fontFamily: "MuseoModerno" }}>{scheSelected?.name ?? "--"}</Text>
+                    <Text style={{ fontSize: 16, fontWeight: "500", fontFamily: "MuseoModerno", backgroundColor: 'white', borderRadius: 6, paddingHorizontal: 10, paddingVertical: 5, marginTop: 10 }}>
+                      {scheSelected?.name ?? "--"}
+                    </Text>
                   </View>
 
-                  <TouchableOpacity onPress={removeHandle} style={{ position: "absolute", top: 10, right: 10 }}>
-                    <View style={{ padding: 5, backgroundColor: "#eee", borderRadius: 10 }}>
-                      <Text>Xóa</Text>
+                  <TouchableOpacity onPress={removeHandle} style={{ position: "absolute", top: '7%', right: '7%' }}>
+                    <View style={{ paddingHorizontal: 12, backgroundColor: "white", borderRadius: 10, paddingVertical: 5 }}>
+                      <Text style={{fontFamily: "MuseoModerno", fontWeight: '600'}}>Xóa</Text>
                     </View>
                   </TouchableOpacity>
                 </Animated.View>
               </Pressable>
             </Modal>
+
+
 
             {/* Add Modal */}
             <Modal visible={showAdd} transparent animationType="none">
@@ -516,9 +526,9 @@ const styles = StyleSheet.create({
     width: "100%",
     backgroundColor: "white",
     borderRadius: 16,
-    paddingVertical: 18,
+    paddingVertical: moderateScale(17),
     paddingHorizontal: width * 0.05,
-    minHeight: height * 0.73,
+    height: height * 0.717,
   },
   header: {
     alignItems: "center",
@@ -583,18 +593,16 @@ const styles = StyleSheet.create({
   weekHeader: {
     flexDirection: "row",
     borderColor: "gray",
-    marginTop: 12,
-    height: height * 0.55,
+    marginTop: 0,
+    height: '100%', 
     minWidth: width * 0.83,
     borderWidth: 1,
     borderRadius: 20,
-    overflow: "hidden",
     zIndex: 0,
   },
   dayCell: {
     flex: 1,
     alignItems: "center",
-    paddingTop: 12,
     height: "100%",
     paddingHorizontal: 5,
   },
@@ -609,22 +617,22 @@ const styles = StyleSheet.create({
   },
   mainborder: {
     borderWidth: 1,
-    height: "80%",
+    height: "85%",
     borderColor: "gray",
     borderRadius: 20,
     position: "absolute",
-    bottom: "4.3%",
+    bottom: 0,
     width: "100%",
     zIndex: -1,
   },
   hourcell: {
-    height: `${93 / 4}%`,
+    height: `${100 / 4}%`,
     paddingVertical: 20,
     borderTopWidth: 1,
     borderColor: "gray",
   },
   mainCell: {
-    height: `${86 / 4}%`,
+    height: `25%`,
     paddingVertical: 10,
     borderTopWidth: 1,
     borderColor: "gray",

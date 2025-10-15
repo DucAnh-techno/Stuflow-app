@@ -42,25 +42,27 @@ export default function HomePicture({userData}: {userData: any}) {
         </View>
 
         {/* Scroll ngang grid 2 hàng */}
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.scrollContainer}
-        >
-          <View  style={{minWidth: "95%", paddingLeft: 5}}>
-            <View  style={{flexDirection: "row"}}>
-              {allFile.map((file, index) => (
-              <View key={index} style={{ alignItems: "center" }}>
-                <TouchableOpacity style={{zIndex: 102}} onPress={() => {setUri(allFile); setStartIndex(index); setShowImage(true);}}>
-                  <View style={[styles.doc]}>
-                    <Image source={{uri: file.uri  }} style={styles.avatar} />
-                  </View>
-                </TouchableOpacity>
+        <View style={{ width: '90%', overflow: 'hidden', alignSelf: 'center'}}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.scrollContainer}
+          >
+            <View  style={{minWidth: "95%"}}>
+              <View  style={{flexDirection: "row"}}>
+                {allFile.map((file, index) => (
+                <View key={index} style={{ alignItems: "center" }}>
+                  <TouchableOpacity style={{zIndex: 102}} onPress={() => {setUri(allFile); setStartIndex(index); setShowImage(true);}}>
+                    <View style={[styles.doc]}>
+                      <Image source={{uri: file.uri  }} style={styles.avatar} />
+                    </View>
+                  </TouchableOpacity>
+                </View>
+                ))}
               </View>
-              ))}
             </View>
-          </View>
-        </ScrollView>
+          </ScrollView>
+        </View>
 
         <ImageViewing
           images={uri}
@@ -113,7 +115,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     flexWrap: "wrap",
     gap: 12,
-    paddingHorizontal: 12,
   },
   docBox: {
     width: 96, // ~6rem

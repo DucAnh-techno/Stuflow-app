@@ -3,6 +3,7 @@ import { Calendar as CalendarIcon } from "lucide-react-native";
 import React, { useEffect, useRef, useState } from "react";
 import { Animated, Dimensions, Linking, Modal, Pressable, StyleSheet, Text, TouchableOpacity, TouchableWithoutFeedback, View } from "react-native";
 import { generateCalendar } from "./functions/generatecalendar";
+import { moderateScale } from "react-native-size-matters";
 
 import HomeCalendarSkeleton from "./skeletons/calendarskeleton";
 
@@ -402,7 +403,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "rgba(0,0,0,0.3)", // làm mờ background khi mở modal
+    backgroundColor: "rgba(0,0,0,0.3)", 
   },
   overlay: {
     flex: 1,
@@ -475,11 +476,11 @@ const styles = StyleSheet.create({
     flexWrap: "wrap",
   },
   title: {
-    marginLeft: 25,
+    marginLeft: moderateScale(20),
     fontFamily: "MuseoModerno", 
-    fontSize: 22,
+    fontSize: moderateScale(21),
     textDecorationLine: "underline",
-    width: 90,
+    width: moderateScale(80),
     fontWeight: "500",
   },
   monthSelector: {
@@ -489,14 +490,14 @@ const styles = StyleSheet.create({
     backgroundColor: "#d1d5db",
     borderRadius: 8,
     height: 32,
-    marginLeft: 40
+    marginLeft: moderateScale(35)
   },
   arrowButton: {
     width: 32,
     alignItems: "center",
     justifyContent: "center",
   },
-  arrow: { fontSize: 16, fontWeight: "bold",fontFamily: "MuseoModerno",  },
+  arrow: { fontSize: 16, fontWeight: "bold",fontFamily: "MuseoModerno" },
   monthTextWrapper: {
     paddingHorizontal: 8,
   },

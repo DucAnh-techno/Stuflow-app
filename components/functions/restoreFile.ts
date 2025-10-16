@@ -7,11 +7,15 @@ export async function restoreFile( uri: string, name: string, subject: string, u
 
     if(!user || !uri) {console.error('khong co user'); return([]);}
 
-    const afterUUID = uri.match(/Application\/[A-F0-9\-]+\/(.*)/i)?.[1];
+    const afterApp = uri.split("StuFlow/").pop();
 
-    if(!afterUUID) {console.error('khong co user'); return([]);}
+    if (!afterApp) {
+    console.error('không tìm thấy StuFlow trong uri');
+    return [];
+    }
 
-    const newUri = FileSystem.documentDirectory + afterUUID.replace(/^Documents\//, "");
+    // Tạo lại uri đúng cho app hiện tại
+    const newUri = FileSystem.documentDirectory + afterApp;
 
     if (name === "") {name = "Unkown"}
 

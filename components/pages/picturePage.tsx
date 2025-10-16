@@ -29,7 +29,7 @@ import ImageViewing from "react-native-image-viewing";
 import { Portal } from 'react-native-paper';
 import { db } from "src/firebase/firebase";
 import { restorePicture } from "../functions/restoreImg";
-import * as FileSystem from 'expo-file-system';
+import * as FileSystem from 'expo-file-system/legacy';
 import { restoreAvatar } from "../functions/restoreAvatar";
 
 const { height, width } = Dimensions.get("window");
@@ -253,24 +253,49 @@ export default function PicturePage() {
   const restore = async() => {
     for (const sub of pictures){
       for (const item of sub.pictures) {
-        const fileInfo = new FileSystem.File(item.uri);
-        const info = fileInfo.info();
+        
+          try {
+            const info = await FileSystem.getInfoAsync(item.uri);
 
-        if(!info.exists) {
-          const restore: fileSubSave[] | [] = await restorePicture(item.uri, sub.subName, user);
-          setPictures(restore);
-        }
+            // Nếu không tồn tại, restore lại
+            if (!info.exists) {
+              const restored: fileSubSave[] | [] = await restorePicture(
+                item.uri,
+                sub.subName,
+                user
+              );
+              setPictures(restored);
+            }
+          } catch (err) {
+            console.log("⚠️ Không thể truy cập picture này:", err);
+            // fallback: khôi phục lại luôn nếu không thể đọc file
+            const restored: fileSubSave[] | [] = await restorePicture(
+              item.uri,
+              sub.subName,
+              user
+            );
+            setPictures(restored);
+          }
       }
     }
   };
 
   const restoreA = async () => {
-    const fileInfo = new FileSystem.File(avatar);
-    const info = fileInfo.info();
+    try{
+      const info = await FileSystem.getInfoAsync(avatar);
 
-    if(!info.exists) {
-      const restore: any = await restoreAvatar(avatar, user);
-      setAvatar(restore);
+      if(!info.exists) {
+        const restore: any = await restoreAvatar(avatar, user);
+        setAvatar(restore);
+      }
+    } catch (err) {
+      console.log("⚠️ Không thể truy cập avatar này:", err);
+      const info = await FileSystem.getInfoAsync(avatar);
+
+      if(!info.exists) {
+        const restore: any = await restoreAvatar(avatar, user);
+        setAvatar(restore);
+      }
     }
   };
 

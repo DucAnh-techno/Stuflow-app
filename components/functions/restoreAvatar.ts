@@ -6,11 +6,15 @@ export async function restoreAvatar( uri: string, user: string | null) {
 
     if(!user || !uri) {console.error('khong co user'); return([]);}
 
-    const afterUUID = uri.match(/Application\/[A-F0-9\-]+\/(.*)/i)?.[1];
+    const afterApp = uri.split("StuFlow/").pop();
 
-    if(!afterUUID) {console.error('khong co user'); return([]);}
+    if (!afterApp) {
+    console.error('không tìm thấy StuFlow trong uri');
+    return [];
+    }
 
-    const newUri: string = FileSystem.documentDirectory + afterUUID.replace(/^Documents\//, "");
+    // Tạo lại uri đúng cho app hiện tại
+    const newUri = FileSystem.cacheDirectory + afterApp;
 
 
     await setDoc(doc(db, "users", user), {

@@ -182,17 +182,40 @@ export default function DocumentPage() {
     setPressPosition({ x: pageX, y: pageY });  // lưu vị trí nhấn trên màn hình
   };
 
-  const restore = async() => {
-    for (const sub of files){
-      for (const item of sub.files) {
-        const fileInfo = new FileSystem.File(item.uri);
-        const info = fileInfo.info();
+  const restore = async () => {
+    try {
+      for (const sub of files) {
+        for (const item of sub.files) {
+          const file = new FileSystem.File(item.uri);
 
-        if(!info.exists) {
-          const restore: fileSubSave[] | [] = await restoreFile(item.uri, item.name, sub.subName, user);
-          setFiles(restore);
+          try {
+            const info = await file.info();
+
+            // Nếu không tồn tại, restore lại
+            if (!info.exists) {
+              const restored: fileSubSave[] | [] = await restoreFile(
+                item.uri,
+                item.name,
+                sub.subName,
+                user
+              );
+              setFiles(restored);
+            }
+          } catch (err) {
+            console.log("⚠️ Không thể truy cập file này:", item.name, err);
+            // fallback: khôi phục lại luôn nếu không thể đọc file
+            const restored: fileSubSave[] | [] = await restoreFile(
+              item.uri,
+              item.name,
+              sub.subName,
+              user
+            );
+            setFiles(restored);
+          }
         }
       }
+    } catch (e) {
+      console.log("❌ Restore error:", e);
     }
   };
 

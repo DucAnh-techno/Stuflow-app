@@ -24,7 +24,8 @@ import {
   TextInput,
   TouchableOpacity,
   TouchableWithoutFeedback,
-  View
+  View,
+  Linking
 } from "react-native";
 import FileViewer from 'react-native-file-viewer';
 import { Portal } from 'react-native-paper';
@@ -73,25 +74,6 @@ export default function DocumentPage() {
 
     updateFiles();
   }, [user, reload]);
-
-  useEffect(() => {
-    const retore = async() => {
-      for (const sub of files){
-        for (const item of sub.files) {
-          const fileInfo = new FileSystem.File(item.uri);
-          const info = fileInfo.info();
-
-          if(!info.exists) {
-            const restore: fileSubSave[] | [] = await restoreFile(item.uri, item.name, sub.subName, user);
-            setFiles(restore);
-          }
-        }
-      }
-    };
-
-    retore();
-    console.log('restore');
-  }, [files, user])
 
   const scale = useRef(new Animated.Value(0.6)).current;
   const opacity = useRef(new Animated.Value(0)).current;
@@ -200,6 +182,20 @@ export default function DocumentPage() {
     setPressPosition({ x: pageX, y: pageY });  // lưu vị trí nhấn trên màn hình
   };
 
+  const restore = async() => {
+    for (const sub of files){
+      for (const item of sub.files) {
+        const fileInfo = new FileSystem.File(item.uri);
+        const info = fileInfo.info();
+
+        if(!info.exists) {
+          const restore: fileSubSave[] | [] = await restoreFile(item.uri, item.name, sub.subName, user);
+          setFiles(restore);
+        }
+      }
+    }
+  };
+
   return (
     <>
       <ScrollView showsVerticalScrollIndicator={false}>
@@ -232,11 +228,18 @@ export default function DocumentPage() {
             )}
             <View style={styles.card}>
               <View style={{width: "100%", alignItems: "flex-end", marginTop: -15}}> 
-                <TouchableOpacity 
-                onPress={() => {setShowAddSub(true);}}
-                style={{width: 65, transform: [{translateX: -30}, {translateY: 35}], borderWidth: 1, borderRadius: 7, paddingHorizontal: 5, borderColor: "gray"}}>
-                    <Text style={{fontWeight: "300", fontSize: 16, textAlign: "right", fontFamily: "MuseoModerno",}}>+ môn</Text>
-                </TouchableOpacity>
+                <View style={{flexDirection: 'row'}}>
+                  <TouchableOpacity 
+                  onPress={() => {restore();}}
+                  style={{width: 65, transform: [{translateX: -30}, {translateY: 35}], borderWidth: 1, borderRadius: 7, paddingHorizontal: 5, borderColor: "gray"}}>
+                      <Text style={{fontWeight: "300", fontSize: 16, textAlign: "right", fontFamily: "MuseoModerno",}}>restore</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity 
+                  onPress={() => {setShowAddSub(true);}}
+                  style={{width: 65, transform: [{translateX: -30}, {translateY: 35}], borderWidth: 1, borderRadius: 7, paddingHorizontal: 5, borderColor: "gray", marginLeft: 10}}>
+                      <Text style={{fontWeight: "300", fontSize: 16, textAlign: "right", fontFamily: "MuseoModerno",}}>+ môn</Text>
+                  </TouchableOpacity>
+                </View>
               </View>
               {/* List các file */}
               <View style={styles.docCont}>
@@ -247,11 +250,9 @@ export default function DocumentPage() {
                       <Text style={[styles.remove, {fontWeight: "300", fontSize: 14, textAlign: "right", marginRight: 20}]}>Xóa môn</Text>
                     </TouchableOpacity>
                     <View style={{flexDirection: "row", flexWrap: "wrap",}}>
-                      {file.files.map(async(item, i) => {
-
-
+                      {file.files.map((item, i) => {
                         return(
-                      <View key={i} style={{ alignItems: "center", }}>
+                      <View key={i} style={{ alignItems: "center", width: '30%', margin: `${10 / 6}%` }}>
                         <TouchableOpacity style={{zIndex: 102}} onPress={() => {FileViewer.open(item.uri)}} 
                         onLongPress={(e) => {
                           setSelected(index * 1000 + i); 
@@ -264,10 +265,8 @@ export default function DocumentPage() {
                             <Image source={{uri: item.uri  }} style={styles.avatar}></Image>
                           </View>
                         </TouchableOpacity>
-
-
                         
-                        <Text style={{fontFamily: "MuseoModerno", width: 80, height: 25, textAlign: "center", overflow: "hidden"}}>{item.name}.pdf</Text>
+                        <Text style={{fontFamily: "MuseoModerno", width: '90%', height: 25, textAlign: "center", overflow: "hidden"}}>{item.name}.pdf</Text>
                         
                       </View>
                       )})}
@@ -334,7 +333,7 @@ export default function DocumentPage() {
               {error !== "" && <Text style={{textAlign: "center", fontFamily: "MuseoModerno", fontSize: 16, color: "red"}}>{error}</Text>}
               <View style={styles.actions}>
                 <TouchableOpacity onPress={() => {
-                  setShowInput(false); setFileName("unknown"); 
+                  setShowInput(false); 
                   setSubjectName(""); setFileName(""); 
                   setThemMon(false); setError("");
                   }} 
@@ -374,6 +373,7 @@ export default function DocumentPage() {
                   setSubjectName(""); 
                   setError("");
                   setShowAddSub(false);
+                  setFileName("");
                   }} 
                   style={styles.cancelBtn}>
                   <Text style={{ color: "black", fontSize: 16, paddingHorizontal: 30 }}>Hủy</Text>
@@ -413,14 +413,12 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     padding: 10,
     flexWrap: "wrap",
-    paddingTop: 0
   },
   doc: {
     aspectRatio: 1,
-    width: '30%',
+    width: '100%',
     borderRadius: 8,
     backgroundColor: "rgb(240, 240, 240, 0.3)",
-    margin: `${10 / 6}%`,
     borderColor: "#aaa",
     borderWidth: 1,
     alignItems: "center",

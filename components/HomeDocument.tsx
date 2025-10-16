@@ -1,10 +1,10 @@
 import { fileSubSave } from "@/types";
-import * as FileSystem from 'expo-file-system';
 import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
   Dimensions,
   Image,
+  Linking,
   ScrollView,
   StyleSheet,
   Text,
@@ -12,7 +12,6 @@ import {
   View
 } from "react-native";
 import FileViewer from 'react-native-file-viewer';
-import { restoreFile } from "./functions/restoreFile";
 
 const { height, width } = Dimensions.get("window");
 
@@ -24,25 +23,6 @@ export default function HomeDocument({userData}: {userData: any}) {
     if (!userData) {return}
     setFiles(userData.itemSaved);
   }, [userData]);
-
-  useEffect(() => {
-    const retore = async() => {
-      for (const sub of files){
-        for (const item of sub.files) {
-          const fileInfo = new FileSystem.File(item.uri);
-          const info = fileInfo.info();
-
-          if(!info.exists) {
-            const restore: fileSubSave[] | [] = await restoreFile(item.uri, item.name, sub.subName, userData.username);
-            setFiles(restore);
-          }
-        }
-      }
-    };
-
-    retore();
-    console.log('restore');
-  }, [files, userData])
 
   return (
     <View style={styles.container}>

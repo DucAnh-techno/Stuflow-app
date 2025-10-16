@@ -23,10 +23,10 @@ import { doc, getDoc, setDoc } from "firebase/firestore";
 import { useAuth } from "@/src/context/AuthContext";
 import { loginWithPortal } from "@/src/service/authService";
 import { updateData } from "@/src/service/updateData";
+import { moderateScale } from "react-native-size-matters";
 import { db } from "src/firebase/firebase";
 import Sidenav from "../../components/Sidenav";
 import ReCaptchaV3, { ReCaptchaV3Ref } from "../../src/service/reCaptcha";
-import { moderateScale } from "react-native-size-matters";
 
 /**
  * Layout / Tabs screen

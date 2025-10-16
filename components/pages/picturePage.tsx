@@ -30,6 +30,7 @@ import { Portal } from 'react-native-paper';
 import { db } from "src/firebase/firebase";
 import { restorePicture } from "../functions/restoreImg";
 import * as FileSystem from 'expo-file-system';
+import { restoreAvatar } from "../functions/restoreAvatar";
 
 const { height, width } = Dimensions.get("window");
 
@@ -56,6 +57,8 @@ export default function PicturePage() {
 
   const [ error, setError ] = useState("");
 
+  const [ avatar, setAvatar ] = useState("");
+
   useEffect(() => {
     const updateFiles = async () => {
       if (!user) {
@@ -70,29 +73,11 @@ export default function PicturePage() {
       }
       const docData = docSnap.data();
       setPictures(docData.itemSaved || []);
+      setAvatar(docData.avatar);
     };
 
     updateFiles();
   }, [user, reload]);
-
-  useEffect(() => {
-    const retore = async() => {
-      for (const sub of pictures){
-        for (const item of sub.pictures) {
-          const fileInfo = new FileSystem.File(item.uri);
-          const info = fileInfo.info();
-
-          if(!info.exists) {
-            const restore: fileSubSave[] | [] = await restorePicture(item.uri, sub.subName, user);
-            setPictures(restore);
-          }
-        }
-      }
-    };
-
-    retore();
-    console.log('restore');
-  }, [pictures, user]);
 
     const scale = useRef(new Animated.Value(0.6)).current;
     const opacity = useRef(new Animated.Value(0)).current;
@@ -265,6 +250,30 @@ export default function PicturePage() {
     setPressPosition({ x: pageX, y: pageY });  // lưu vị trí nhấn trên màn hình
   };
 
+  const restore = async() => {
+    for (const sub of pictures){
+      for (const item of sub.pictures) {
+        const fileInfo = new FileSystem.File(item.uri);
+        const info = fileInfo.info();
+
+        if(!info.exists) {
+          const restore: fileSubSave[] | [] = await restorePicture(item.uri, sub.subName, user);
+          setPictures(restore);
+        }
+      }
+    }
+  };
+
+  const restoreA = async () => {
+    const fileInfo = new FileSystem.File(avatar);
+    const info = fileInfo.info();
+
+    if(!info.exists) {
+      const restore: any = await restoreAvatar(avatar, user);
+      setAvatar(restore);
+    }
+  };
+
   return (
     <>
       <ScrollView showsVerticalScrollIndicator={false}>
@@ -318,11 +327,18 @@ export default function PicturePage() {
             )}
             <View style={styles.card}>
               <View style={{width: "100%", alignItems: "flex-end", marginTop: -15}}> 
-                <TouchableOpacity 
-                onPress={() => {setShowAddSub(true);}}
-                style={{width: 65, transform: [{translateX: -30}, {translateY: 35}], borderWidth: 1, borderRadius: 7, paddingHorizontal: 5, borderColor: "gray"}}>
-                    <Text style={{fontWeight: "300", fontSize: 16, textAlign: "right", fontFamily: "MuseoModerno",}}>+ môn</Text>
-                </TouchableOpacity>
+                <View style={{flexDirection: 'row'}}>
+                  <TouchableOpacity 
+                  onPress={() => {restore(); restoreA();}}
+                  style={{width: 65, transform: [{translateX: -30}, {translateY: 35}], borderWidth: 1, borderRadius: 7, paddingHorizontal: 5, borderColor: "gray"}}>
+                      <Text style={{fontWeight: "300", fontSize: 16, textAlign: "right", fontFamily: "MuseoModerno",}}>restore</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity 
+                  onPress={() => {setShowAddSub(true);}}
+                  style={{width: 65, transform: [{translateX: -30}, {translateY: 35}], borderWidth: 1, borderRadius: 7, paddingHorizontal: 5, borderColor: "gray", marginLeft: 10}}>
+                      <Text style={{fontWeight: "300", fontSize: 16, textAlign: "right", fontFamily: "MuseoModerno",}}>+ môn</Text>
+                  </TouchableOpacity>
+                </View>
               </View>
               {/* List các file */}
               <View style={styles.docCont}>
@@ -334,7 +350,7 @@ export default function PicturePage() {
                     </TouchableOpacity>
                     <View style={{flexDirection: "row", flexWrap: "wrap",}}>
                       {picture.pictures.map((item, i) => (
-                      <View key={i} style={{ alignItems: "center" }}>
+                      <View key={i} style={{ alignItems: "center", width: '30%', margin: `${10 / 6}%` }}>
                         <TouchableOpacity style={{zIndex: 102}} 
                         onPress={() => {setUri(picture.pictures); setShowImage(true); setStartIndex(i); }} 
                         onLongPress={(e) => {
@@ -498,10 +514,9 @@ const styles = StyleSheet.create({
   },
   doc: {
     aspectRatio: 1,
-    width: '30%',
+    width: '100%',
     borderRadius: 8,
     backgroundColor: "rgb(240, 240, 240, 0.3)",
-    margin: `${10 / 6}%`,
     borderColor: "#aaa",
     borderWidth: 1,
     alignItems: "center",

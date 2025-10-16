@@ -6,7 +6,7 @@ export async function restoreAvatar( uri: string, user: string | null) {
 
     if(!user || !uri) {console.error('khong co user'); return([]);}
 
-    const afterApp = uri.split("StuFlow/").pop();
+    const afterApp = uri.split("Caches/").pop();
 
     if (!afterApp) {
     console.error('không tìm thấy StuFlow trong uri');

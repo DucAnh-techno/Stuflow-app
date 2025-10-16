@@ -7,7 +7,7 @@ export async function restoreFile( uri: string, name: string, subject: string, u
 
     if(!user || !uri) {console.error('khong co user'); return([]);}
 
-    const afterApp = uri.split("StuFlow/").pop();
+    const afterApp = uri.split("Documents/").pop();
 
     if (!afterApp) {
     console.error('không tìm thấy StuFlow trong uri');

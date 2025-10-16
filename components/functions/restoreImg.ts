@@ -7,7 +7,7 @@ export async function restorePicture( uri: string, subject: string, user: string
 
     if(!user || !uri) {console.error('khong co user'); return([]);}
 
-    const afterApp = uri.split("StuFlow/").pop();
+    const afterApp = uri.split("Caches/").pop();
 
     if (!afterApp) {
     console.error('không tìm thấy StuFlow trong uri');

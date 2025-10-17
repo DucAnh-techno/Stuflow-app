@@ -359,27 +359,34 @@ export default function SchedulePage() {
                       <Text style={[styles.dayText, { textAlign: "center", marginTop: 20 }]}>Thời gian</Text>
                     </View>
                     <View style={{height: '85%'}}>
-                      <View style={[styles.hourcell, { borderTopWidth: 0 }]}><Text>00:00-06:00</Text></View>
-                      <View style={styles.hourcell}><Text>06:00-12:00</Text></View>
-                      <View style={styles.hourcell}><Text>12:00-18:00</Text></View>
-                      <View style={styles.hourcell}><Text>18:00-24:00</Text></View>
+                      <View style={[styles.hourcell, { borderTopWidth: 0 }]}><Text style={{fontFamily: 'MuseoModerno', fontWeight: '500'}}>00:00-06:00</Text></View>
+                      <View style={styles.hourcell}><Text style={{fontFamily: 'MuseoModerno', fontWeight: '500'}}>06:00-12:00</Text></View>
+                      <View style={styles.hourcell}><Text style={{fontFamily: 'MuseoModerno', fontWeight: '500'}}>12:00-18:00</Text></View>
+                      <View style={styles.hourcell}><Text style={{fontFamily: 'MuseoModerno', fontWeight: '500'}}>18:00-24:00</Text></View>
                     </View>
                   </View>
 
                   {dateNames.map((d, s) => {
                     const currentDD = Number(weeks?.[s]?.slice(8, 10));
                     const currentMM = Number(weeks?.[s]?.slice(5, 7));
+                    const day = new Date();
+                    const ddNow = Number(day.getDate());
+                    const mmNow = Number(day.getMonth()) + 1;
+                    console.log(ddNow, mmNow);
 
                     return (
-                      <View key={s} style={[styles.dayCell, styles.verticalBorder]}>
-                        <View style={{ height: '15%', paddingTop: 15 }}>
+                      <View key={s} 
+                      style={[
+                        styles.dayCell, styles.verticalBorder,
+                        ]}>
+                        <View style={[{ height: '15.1%', paddingTop: 15 }, ]}>
                           <Text style={styles.dayText}>{d}</Text>
                           <Text>{weeks?.[s]?.slice(8, 10) ?? "--"}</Text>
                         </View>
 
-                        <View style={{height: '85%'}}>
+                        <View style={[{height: '84.8%'}, currentDD === ddNow && mmNow === currentMM && {backgroundColor: '#e6ffe6'}]}>
                           {hourSlots.map((hour, index) => (
-                            <View key={index} style={[styles.mainCell, index === 0 && { borderTopWidth: 0 }]}>
+                            <View key={index} style={[styles.mainCell, index === 0 && { borderTopWidth: 0 },]}>
                               <View style={{ width: "100%", flexDirection: "column", flexWrap: "wrap" }}>
                                 {safeSchedule.map((item, i) => {
                                   const ddNum = Number(item.daystart?.slice(8, 10));
@@ -389,7 +396,7 @@ export default function SchedulePage() {
                                   const timeBlock = !Number.isNaN(parsedHour) ? parsedHour / 6 : -1;
 
                                   return (
-                                    <View key={i}>
+                                    <View key={i} >
                                       {ddNum === currentDD && mmNum === currentMM && timeBlock >= (hour - 1) && timeBlock < hour && (
                                         <Pressable
                                           style={[styles.scheCell, { backgroundColor: item.color ?? "#ccc" }]}
@@ -409,7 +416,6 @@ export default function SchedulePage() {
                     );
                   })}
                 </View>
-
                 <View style={styles.mainborder} />
               </Pressable>
             </ScrollView>
@@ -593,18 +599,16 @@ const styles = StyleSheet.create({
   weekHeader: {
     flexDirection: "row",
     borderColor: "gray",
-    marginTop: 0,
     height: '100%', 
     minWidth: width * 0.83,
     borderWidth: 1,
     borderRadius: 20,
-    zIndex: 0,
   },
   dayCell: {
     flex: 1,
     alignItems: "center",
     height: "100%",
-    paddingHorizontal: 5,
+
   },
   dayText: {
     fontFamily: "MuseoModerno",
@@ -636,7 +640,7 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderTopWidth: 1,
     borderColor: "gray",
-    minWidth: 20,
+    minWidth: width * (29.7 / 414),
     flexDirection: "column",
     flexWrap: "wrap",
   },
@@ -645,6 +649,7 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     marginHorizontal: 2,
     marginBottom: 4,
+    zIndex: 10,
   },
   overlay: {
     position: "absolute",

@@ -351,7 +351,7 @@ export default function SchedulePage() {
             </View>
 
             <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-              <Pressable>
+              <Pressable onPress={() => {setIsOpen(false);}}>
                 {/* Day Names & grid */}
                 <View style={styles.weekHeader}>
                   <View style={[styles.dayCell]}>
@@ -384,9 +384,18 @@ export default function SchedulePage() {
                           <Text>{weeks?.[s]?.slice(8, 10) ?? "--"}</Text>
                         </View>
 
-                        <View style={[{height: '84.8%'}, currentDD === ddNow && mmNow === currentMM && {backgroundColor: '#e6ffe6'}]}>
+                        <View 
+                        style={[
+                          {height: '84.8%'}, 
+                          currentDD === ddNow && mmNow === currentMM && {backgroundColor: '#e6ffe6'},
+                          s === 6 && {borderTopRightRadius: 20, borderBottomRightRadius: 20},
+                        ]}>
                           {hourSlots.map((hour, index) => (
-                            <View key={index} style={[styles.mainCell, index === 0 && { borderTopWidth: 0 },]}>
+                            <View key={index} 
+                            style={[
+                              styles.mainCell, 
+                              index === 0 && { borderTopWidth: 0 },
+                              ]}>
                               <View style={{ width: "100%", flexDirection: "column", flexWrap: "wrap" }}>
                                 {safeSchedule.map((item, i) => {
                                   const ddNum = Number(item.daystart?.slice(8, 10));
@@ -608,7 +617,6 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: "center",
     height: "100%",
-
   },
   dayText: {
     fontFamily: "MuseoModerno",
@@ -640,7 +648,7 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderTopWidth: 1,
     borderColor: "gray",
-    minWidth: width * (29.7 / 414),
+    minWidth: width * (33 / 414),
     flexDirection: "column",
     flexWrap: "wrap",
   },

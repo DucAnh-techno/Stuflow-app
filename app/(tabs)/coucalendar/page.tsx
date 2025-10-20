@@ -225,7 +225,7 @@ export default function CoursesCalendar() {
       <TouchableWithoutFeedback>
         <View style={styles.container}>
           <View style={styles.card}>
-            {/* Header */}
+            {/* Header */} 
             <View style={styles.header}>
               <Text style={styles.title}>E-Learning</Text>
               <TouchableOpacity onPress={toggle} style={styles.monthTextWrapper}>

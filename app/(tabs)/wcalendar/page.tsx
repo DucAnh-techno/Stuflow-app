@@ -224,7 +224,7 @@ export default function WeekCalendar() {
                   <Text style={styles.dayOfWeekText}>
                     {isActive === 2 * 10 + rday ? "Hôm nay" : dateNamesToShow[isActive % 10]}
                   </Text>
-                </View>
+                </View> 
               </TouchableOpacity>
             </View>
 

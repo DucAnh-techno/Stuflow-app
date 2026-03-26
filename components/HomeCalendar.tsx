@@ -1,7 +1,7 @@
 import { Courses, DayItem, LichTuanItem } from "@/types";
 import { Calendar as CalendarIcon } from "lucide-react-native";
 import React, { useEffect, useRef, useState } from "react";
-import { Animated, Dimensions, Linking, Modal, Pressable, StyleSheet, Text, TouchableOpacity, TouchableWithoutFeedback, View } from "react-native";
+import { Animated, Dimensions, Linking, Modal, Pressable, StyleSheet, Text, TouchableOpacity, TouchableWithoutFeedback, View, ScrollView } from "react-native";
 import { generateCalendar } from "./functions/generatecalendar";
 import { moderateScale } from "react-native-size-matters";
 
@@ -291,6 +291,7 @@ export default function HomeCalendar({userData}: {userData: any}) {
             backgroundColor: "rgba(0,0,0,0.4)",
             justifyContent: "center",
             alignItems: "center",
+            
           }}
           onPress={closeModal}
         >
@@ -307,88 +308,90 @@ export default function HomeCalendar({userData}: {userData: any}) {
                 {dateNamesToShow[parseInt(timeModal.slice(0,1))]}, {timeModal.split("-")[1]?.padStart(2, "0")}/{timeModal.split("-")[2]?.padStart(2, "0")}/{year}
               </Text>
               <View style={{height: 1, width: "70%", backgroundColor: "gray", alignSelf: "center"}}></View>
-              <View style={styles.modalView}>
-                {lichTuan?.map((item, index) => { 
+              <ScrollView style={{maxHeight: height * 0.6}}>
+                <View style={styles.modalView}>
+                  {lichTuan?.map((item, index) => { 
+                    return(
+                      <View key={index}>
+                        {timeModal.split("-")[1]?.padStart(2, "0") === item.daystart.slice(0, 2)
+                        && timeModal.split("-")[2]?.padStart(2, "0") === item.daystart.slice(3,5)
+                        && <View style={{width: "100%"}}>
+                            <TouchableOpacity onPress={() => handlePress(item.link)} >
+                              <View style={[
+                                styles.modalItem, 
+                                item.isTamNgung && {backgroundColor: "rgb(240,0,0,0.15)", opacity: 0.7}
+                                ]}>
+                                <View style={{flexDirection: "row", alignContent: "space-around", width: "100%"}}>
+                                  <Text style={{fontFamily: "MuseoModerno", fontWeight: "500", fontSize: 17, marginBottom: 8, textDecorationLine: "underline", width: width * 0.6}}>
+                                    {item.tenMonHoc}
+                                  </Text>
+                                  <Text style={{fontFamily: "MuseoModerno", fontWeight: "400", fontSize: 12, position: "absolute", right: 0, top: 5}}>
+                                  {!item.isTamNgung ? item.gioHoc.slice(0,5)
+                                  :<View>
+                                    <View style={{position: "absolute", height: 21, width: 20, borderRadius:5, backgroundColor: "rgb(255,0,0,0.8)", marginLeft: -0.8, marginTop : -1.8}}></View>
+                                    <Text>❕</Text>
+                                    </View>}
+                                  </Text>
+                              </View>
+
+
+                              <View style={{flexDirection: "row"}}>
+                                <Text style={{fontFamily: "MuseoModerno", fontWeight: "500", fontSize: 14,}}>Phòng: </Text>
+                                <Text style={{fontFamily: "MuseoModerno", fontWeight: "400", fontSize: 14, width: width * 0.5}}>{item.tenPhong}</Text>
+                              </View>
+
+                              <View style={{flexDirection: "row"}}>
+                                <Text style={{fontFamily: "MuseoModerno", fontWeight: "500", fontSize: 14,}}>Thời gian: </Text>
+                                <Text style={{fontFamily: "MuseoModerno", fontWeight: "400", fontSize: 14,}}>{item.gioHoc} (Tiết {item.tuTiet}-{item.denTiet})</Text>
+                              </View>
+
+                              {item.isTamNgung && <View style={styles.tamNgung}><Text style={{fontFamily: "MuseoModerno", fontWeight: "500", fontSize: 14, color: "white", alignSelf: "center"}}>Tạm Ngưng</Text></View>}
+                            </View>
+                          </TouchableOpacity>
+                      </View>
+                    }
+                  </View>
+                )})}
+
+                {courses?.map((course, index) => { 
+                  const coursedisplay = course.coursename?.split(" - ")[1] || "";
+                  const date = new Date(parseInt(course.timestart) * 1000);
+                  const time = `${date.getHours().toString().padStart(2,'0')}:${date.getMinutes().toString().padStart(2,'0')}`;
+
                   return(
                     <View key={index}>
-                      {timeModal.split("-")[1]?.padStart(2, "0") === item.daystart.slice(0, 2)
-                      && timeModal.split("-")[2]?.padStart(2, "0") === item.daystart.slice(3,5)
+                      {timeModal.split("-")[1]?.padStart(2, "0") === course.daystart.slice(0, 2)
+                      && timeModal.split("-")[2]?.padStart(2, "0") === course.daystart.slice(3,5)
                       && <View style={{width: "100%"}}>
-                          <TouchableOpacity onPress={() => handlePress(item.link)} >
-                            <View style={[
-                              styles.modalItem, 
-                              item.isTamNgung && {backgroundColor: "rgb(240,0,0,0.15)", opacity: 0.7}
-                              ]}>
-                              <View style={{flexDirection: "row", alignContent: "space-around", width: "100%"}}>
-                                <Text style={{fontFamily: "MuseoModerno", fontWeight: "500", fontSize: 17, marginBottom: 8, textDecorationLine: "underline", width: width * 0.6}}>
-                                  {item.tenMonHoc}
-                                </Text>
-                                <Text style={{fontFamily: "MuseoModerno", fontWeight: "400", fontSize: 12, position: "absolute", right: 0, top: 5}}>
-                                {!item.isTamNgung ? item.gioHoc.slice(0,5)
-                                :<View>
-                                  <View style={{position: "absolute", height: 21, width: 20, borderRadius:5, backgroundColor: "rgb(255,0,0,0.8)", marginLeft: -0.8, marginTop : -1.8}}></View>
-                                  <Text>❕</Text>
-                                  </View>}
-                                </Text>
-                            </View>
-
-
-                            <View style={{flexDirection: "row"}}>
-                              <Text style={{fontFamily: "MuseoModerno", fontWeight: "500", fontSize: 14,}}>Phòng: </Text>
-                              <Text style={{fontFamily: "MuseoModerno", fontWeight: "400", fontSize: 14, width: width * 0.5}}>{item.tenPhong}</Text>
+                        <TouchableOpacity onPress={() => handlePress(course.url)} >
+                          <View style={[
+                            styles.modalItem,
+                            eventKey.includes(course.eventtype) ? {backgroundColor: "rgb(255,0,0,0.12)", shadowColor: "rgb(255,0,0,0.4)",} : {backgroundColor: "rgb(0,150,0,0.08)", shadowColor: "rgb(0,255,0,0.4)",}
+                            ]}>
+                            <View style={{flexDirection: "row", alignContent: "space-around", width: "100%"}}>
+                              <Text style={{fontFamily: "MuseoModerno", fontWeight: "500", fontSize: 17, marginBottom: 8, textDecorationLine: "underline", width: width * 0.6}}>
+                                {coursedisplay}
+                              </Text>
+                              <Text style={{fontFamily: "MuseoModerno", fontWeight: "400", fontSize: 12, position: "absolute", right: 0, top: 5}}>{time}</Text>
                             </View>
 
                             <View style={{flexDirection: "row"}}>
                               <Text style={{fontFamily: "MuseoModerno", fontWeight: "500", fontSize: 14,}}>Thời gian: </Text>
-                              <Text style={{fontFamily: "MuseoModerno", fontWeight: "400", fontSize: 14,}}>{item.gioHoc} (Tiết {item.tuTiet}-{item.denTiet})</Text>
+                              <Text style={{fontFamily: "MuseoModerno", fontWeight: "400", fontSize: 14,}}>{time}, ngày {course.daystart}</Text>
                             </View>
 
-                            {item.isTamNgung && <View style={styles.tamNgung}><Text style={{fontFamily: "MuseoModerno", fontWeight: "500", fontSize: 14, color: "white", alignSelf: "center"}}>Tạm Ngưng</Text></View>}
+                            <View style={{flexDirection: "row"}}>
+                              <Text style={{fontFamily: "MuseoModerno", fontWeight: "500", fontSize: 14,}}>Hoạt động: </Text>
+                              <Text style={{fontFamily: "MuseoModerno", fontWeight: "400", fontSize: 14, width: width * 0.5}}>{course.name}</Text>
+                            </View>
                           </View>
                         </TouchableOpacity>
+                      </View>
+                      }
                     </View>
-                  }
+                  )})}
                 </View>
-              )})}
-
-              {courses?.map((course, index) => { 
-                const coursedisplay = course.coursename?.split(" - ")[1] || "";
-                const date = new Date(parseInt(course.timestart) * 1000);
-                const time = `${date.getHours().toString().padStart(2,'0')}:${date.getMinutes().toString().padStart(2,'0')}`;
-
-                return(
-                  <View key={index}>
-                    {timeModal.split("-")[1]?.padStart(2, "0") === course.daystart.slice(0, 2)
-                    && timeModal.split("-")[2]?.padStart(2, "0") === course.daystart.slice(3,5)
-                    && <View style={{width: "100%"}}>
-                      <TouchableOpacity onPress={() => handlePress(course.url)} >
-                        <View style={[
-                          styles.modalItem,
-                          eventKey.includes(course.eventtype) ? {backgroundColor: "rgb(255,0,0,0.12)", shadowColor: "rgb(255,0,0,0.4)",} : {backgroundColor: "rgb(0,150,0,0.08)", shadowColor: "rgb(0,255,0,0.4)",}
-                          ]}>
-                          <View style={{flexDirection: "row", alignContent: "space-around", width: "100%"}}>
-                            <Text style={{fontFamily: "MuseoModerno", fontWeight: "500", fontSize: 17, marginBottom: 8, textDecorationLine: "underline", width: width * 0.6}}>
-                              {coursedisplay}
-                            </Text>
-                            <Text style={{fontFamily: "MuseoModerno", fontWeight: "400", fontSize: 12, position: "absolute", right: 0, top: 5}}>{time}</Text>
-                          </View>
-
-                          <View style={{flexDirection: "row"}}>
-                            <Text style={{fontFamily: "MuseoModerno", fontWeight: "500", fontSize: 14,}}>Thời gian: </Text>
-                            <Text style={{fontFamily: "MuseoModerno", fontWeight: "400", fontSize: 14,}}>{time}, ngày {course.daystart}</Text>
-                          </View>
-
-                          <View style={{flexDirection: "row"}}>
-                            <Text style={{fontFamily: "MuseoModerno", fontWeight: "500", fontSize: 14,}}>Hoạt động: </Text>
-                            <Text style={{fontFamily: "MuseoModerno", fontWeight: "400", fontSize: 14, width: width * 0.5}}>{course.name}</Text>
-                          </View>
-                        </View>
-                      </TouchableOpacity>
-                    </View>
-                    }
-                  </View>
-                )})}
-              </View>
+              </ScrollView>
             </Pressable>
           </Animated.View>
         </Pressable>
@@ -421,13 +424,15 @@ const styles = StyleSheet.create({
     minHeight: 200,
     borderRadius: 12,
     zIndex: 5,
+    maxHeight: '70%'
   },
   modalCont: {
     paddingBottom: 40,
     paddingHorizontal: 20,
     backgroundColor: "white",
     borderRadius: 20,
-    width: '100%'
+    width: '100%',
+    
   },
   modalView: {
     backgroundColor: "white",
@@ -445,10 +450,10 @@ const styles = StyleSheet.create({
   },
   tamNgung: {
     position: "absolute",
-    top: "-55%",
-    left: "25%",
+    top: "-45%",
+    left: "0%",
     height: 30,
-    width: 200,
+    width: '100%',
     alignItems: "center",
     justifyContent: "flex-start",
     borderColor: "#9ca3af",

@@ -458,7 +458,7 @@ const styles = StyleSheet.create({
     top: -20,
     left: "25%",
     height: 30,
-    width: 200,
+    width: '100%',
     alignItems: "center",
     justifyContent: "flex-start",
     borderColor: "#9ca3af",
